@@ -132,6 +132,7 @@ button.menu-btn{padding:11px 12px;font-size:13px;border-radius:14px;width:100%}
 <div id="victory"></div>
 
 <script type="module">
+import * as THREE from "https://cdn.jsdelivr.net/npm/three@0.160.0/build/three.module.js";
 import {initializeApp} from "https://www.gstatic.com/firebasejs/10.12.2/firebase-app.js";
 import {getDatabase,ref,get,set,update,remove,push,onValue,runTransaction,onDisconnect} from "https://www.gstatic.com/firebasejs/10.12.2/firebase-database.js";
 
@@ -201,24 +202,44 @@ const SCOL=i=>i<3?["#eee","#333","#e33"][i]:SC_[(i/5|0)%7];
 const pf=i=>i==0?"#7a4a21":i%6==5?"url(#rb)":i%6==4?"url(#gd)":i%6==3?"#2e8b3d":`hsl(${i*37%360},${i<8?35:70}%,${i<8?32:45}%)`;
 const PN=i=>(i==0?"Классика":i%6==5?"Радужная":i%6==4?"Золотая":i%6==3?"Денежная":"Цветная")+" №"+(i+1);
 
-const poopIn=i=>`<defs><linearGradient id="rb${i}"><stop offset="0" stop-color="#f33"/><stop offset=".25" stop-color="#fc3"/><stop offset=".5" stop-color="#3d5"/><stop offset=".75" stop-color="#39f"/><stop offset="1" stop-color="#c3f"/></linearGradient><linearGradient id="gd${i}"><stop offset="0" stop-color="#fff2a8"/><stop offset=".5" stop-color="#e8b100"/><stop offset="1" stop-color="#a87400"/></linearGradient><linearGradient id="lim${i}"><stop offset="0" stop-color="#ff5fa2"/><stop offset=".5" stop-color="#c4259c"/><stop offset="1" stop-color="#7a0060"/></linearGradient></defs><g fill="${i>=35?`url(#lim${i})`:i%6==5?`url(#rb${i})`:i%6==4?`url(#gd${i})`:pf(i)}" stroke="${i>=35?'#ff5fa2':'#0005'}" stroke-width="3"><ellipse cx="50" cy="80" rx="38" ry="15"/><ellipse cx="50" cy="58" rx="28" ry="14"/><ellipse cx="50" cy="38" rx="18" ry="12"/><path d="M50 8q12 10 4 22H46q-8-12 4-22z"/></g>`;
+let _u=0;
+const pc=i=>{if(i>=35)return["#ff9bc8","#c4259c","#6a0052"];if(i==0)return["#a8703a","#7a4a21","#3d2310"];if(i%6==3)return["#6fd47f","#2e8b3d","#154a1f"];if(i%6==4)return["#fff2a8","#e8b100","#8a5a00"];const h=i*37%360;return[`hsl(${h},75%,65%)`,`hsl(${h},70%,45%)`,`hsl(${h},70%,22%)`]};
+const poopIn=i=>{const u="p"+(_u++),rb=i<35&&i%6==5,[l,m,d]=pc(i);
+ return `<defs><radialGradient id="${u}" cx=".35" cy=".3" r=".9"><stop offset="0" stop-color="${l}"/><stop offset=".55" stop-color="${m}"/><stop offset="1" stop-color="${d}"/></radialGradient><linearGradient id="${u}r" x1="0" y1="0" x2="1" y2="1"><stop offset="0" stop-color="#f33"/><stop offset=".25" stop-color="#fc3"/><stop offset=".5" stop-color="#3d5"/><stop offset=".75" stop-color="#39f"/><stop offset="1" stop-color="#c3f"/></linearGradient></defs>
+<ellipse cx="50" cy="94" rx="40" ry="5" fill="#0004"/>
+<g fill="url(#${u}${rb?"r":""})" stroke="${rb?"#4a2a6a":d}" stroke-width="2.5" stroke-linejoin="round"><ellipse cx="50" cy="80" rx="38" ry="15"/><ellipse cx="50" cy="58" rx="28" ry="14"/><ellipse cx="50" cy="38" rx="18" ry="12"/><path d="M50 8q12 10 4 22H46q-8-12 4-22z"/></g>
+<g fill="#fff" opacity=".38"><ellipse cx="34" cy="74" rx="10" ry="3.5" transform="rotate(-8 34 74)"/><ellipse cx="38" cy="53" rx="7" ry="3" transform="rotate(-8 38 53)"/><ellipse cx="43" cy="34" rx="5" ry="2.5"/></g>
+${i<35&&i%6==4?'<path d="M76 22l2 5 5 2-5 2-2 5-2-5-5-2 5-2z" fill="#fff"/>':''}${i>=35?'<path d="M24 30l2 5 5 2-5 2-2 5-2-5-5-2 5-2z" fill="#fff"/>':''}${i<35&&i%6==3?'<text x="42" y="66" font-size="20" font-weight="900" fill="#c9f5cf" opacity=".7">$</text>':''}`};
 
 const poopSVG=(i,s=80,face)=>`<svg viewBox="0 0 100 100" width="${s}" height="${s}">${poopIn(i)}${face?'<circle cx="41" cy="60" r="5" fill="#fff"/><circle cx="59" cy="60" r="5" fill="#fff"/><circle cx="42" cy="61" r="2.5"/><circle cx="60" cy="61" r="2.5"/><path d="M42 72q8 7 16 0" stroke="#fff" stroke-width="3" fill="none"/>':""}</svg>`;
 
-const shoeSVG=i=>{const lim=i>=35;return `<svg viewBox="0 0 100 44" width="90" height="40">${lim?`<defs><linearGradient id="ls${i}"><stop offset="0" stop-color="#ff5fa2"/><stop offset=".5" stop-color="#c4259c"/><stop offset="1" stop-color="#7a0060"/></linearGradient></defs>`:""}<path d="M5 32q0-20 18-20h8q4 10 22 10h20q12 0 12 10v4H5z" fill="${lim?`url(#ls${i})`:SCOL(i)}" stroke="${lim?'#ff5fa2':'#0006'}" stroke-width="${lim?3:2}"/><rect x="5" y="34" width="84" height="6" rx="3" fill="#fff"/></svg>`};
+const shoeSVG=i=>{const lim=i>=35,f=i%5,c=lim?`url(#ls${i})`:SCOL(i),st=lim?'#ff5fa2':'#0006';
+ const d=[`M6 32q0-18 16-20h8q5 9 22 10h22q14 0 14 12v2H6z`,`M8 36V4h26v16q14 2 32 8 16 3 16 10H8z`,`M4 34q2-16 24-18l30-10q30 6 36 24v4H4z`,`M6 34q2-14 18-16l14 4q8 6 24 6h16q16 0 16 10H6z`,`M8 36q-4-14 10-20 14-6 28-2 24 0 40 12 6 4 0 12H12z`][f];
+ return `<svg viewBox="0 0 100 44" width="90" height="40"><defs><linearGradient id="ls${i}"><stop offset="0" stop-color="#ff5fa2"/><stop offset=".5" stop-color="#c4259c"/><stop offset="1" stop-color="#7a0060"/></linearGradient></defs><path d="${d}" fill="${c}" stroke="${st}" stroke-width="2.5"/><rect x="4" y="36" width="92" height="6" rx="3" fill="${f==3?'#5fe0ff':'#fff'}"/>${f==1?'<path d="M10 14h22M10 22h22" stroke="#fff" stroke-width="2"/>':''}${f==2?'<path d="M30 20l30-8" stroke="#fff" stroke-width="2"/>':''}${f==3?'<path d="M40 24l8 4M50 22l8 4" stroke="#5fe0ff" stroke-width="2"/>':''}</svg>`};
 
+const SKL=["#ffe8cc","#d3dde4","#b4f2b4","#ffe8cc","#b8c4d4","#ffe8cc","#e0c0f5"],SKD=["#e0a878","#8a9aa4","#5cc05c","#e0a878","#6a7a8a","#e0a878","#a070c8"];
 function ava(eq,sz,poopColor){
-  eq=eq||{};
-  const c=CH[eq.c||0]||{t:0,k:0,h:0};
-  const t=c.t,k=c.k,col=`hsl(${c.h},65%,55%)`;
-  const sk=["#ffd9b0","#b9c4cc","#8fe58f","#ffd9b0","#9ab","#ffd9b0","#c9a0e8"][t];
-  const sc=SCOL(eq.s||0);
-  const limC=(eq.c||0)>=35,limS=(eq.s||0)>=35;
-  const acc=[`<path d="M38 22l4-18 14 12zM82 22l-4-18-14 12z" fill="${sk}"/>`,`<path d="M60 12V0" stroke="#888" stroke-width="3"/><circle cx="60" cy="2" r="4" fill="#f44"/>`,`<path d="M48 14l-8-14M72 14l8-14" stroke="#4c4" stroke-width="3"/><circle cx="40" cy="0" r="4" fill="#4c4"/><circle cx="80" cy="0" r="4" fill="#4c4"/>`,`<path d="M34 24L60-8 86 24z" fill="#d33"/>`,`<path d="M54 42h12l-6 8z" fill="#fa0"/>`,`<ellipse cx="48" cy="6" rx="6" ry="16" fill="${sk}"/><ellipse cx="72" cy="6" rx="6" ry="16" fill="${sk}"/>`,`<path d="M38 18l-6-16 16 10zM82 18l6-16-16 10z" fill="#c33"/>`][t];
-  const ey=[`<path d="M46 36q5-6 10 0M64 36q5-6 10 0" stroke="#222" stroke-width="3" fill="none"/>`,`<circle cx="51" cy="37" r="3"/><circle cx="69" cy="37" r="3"/><path d="M44 28l12 5M76 28l-12 5" stroke="#222" stroke-width="3"/>`,`<path d="M45 37h12M63 37h12" stroke="#222" stroke-width="3"/>`,`<circle cx="51" cy="37" r="4.5" fill="#e22"/><circle cx="69" cy="37" r="4.5" fill="#e22"/>`,`<circle cx="51" cy="36" r="6" fill="#fff"/><circle cx="69" cy="37" r="4" fill="#fff"/><circle cx="52" cy="37" r="2"/><circle cx="68" cy="37" r="1.5"/>`][k];
-  const pIdx=poopColor||eq.p||0;
-  return `<svg viewBox="0 -10 140 150" width="${sz}" height="${sz*1.25}">${limC?`<defs><linearGradient id="lc${sz}"><stop offset="0" stop-color="#ff5fa2"/><stop offset="1" stop-color="#7a0060"/></linearGradient></defs>`:""}<rect x="40" y="95" width="14" height="26" rx="6" fill="#2b2b45"/><rect x="66" y="95" width="14" height="26" rx="6" fill="#2b2b45"/><rect x="30" y="118" width="30" height="14" rx="7" fill="${limS?`url(#ls${eq.s||0})`:sc}"/><rect x="60" y="118" width="30" height="14" rx="7" fill="${limS?`url(#ls${eq.s||0})`:sc}"/><rect x="30" y="128" width="60" height="4" rx="2" fill="#fff"/><rect x="32" y="52" width="56" height="52" rx="20" fill="${limC?`url(#lc${sz})`:col}"/><circle cx="28" cy="80" r="8" fill="${sk}"/><circle cx="92" cy="80" r="8" fill="${sk}"/>${t==4?'<ellipse cx="60" cy="82" rx="16" ry="20" fill="#fff"/>':""}<g transform="translate(78 54) scale(.3)">${poopIn(eq.p||0)}</g><circle cx="60" cy="38" r="26" fill="${t==4?"#445":sk}"/>${t==4?'<ellipse cx="60" cy="42" rx="17" ry="15" fill="#fff"/>':""}${acc}${ey}<path d="M50 50q10 8 20 0" stroke="#222" stroke-width="3" fill="none"/><g transform="translate(88 60) scale(.42)"><g fill="${pIdx>=35?'#ff5fa2':pf(pIdx)}" stroke="#0005" stroke-width="4"><ellipse cx="50" cy="80" rx="38" ry="15"/><ellipse cx="50" cy="58" rx="28" ry="14"/><ellipse cx="50" cy="38" rx="18" ry="12"/><path d="M50 8q12 10 4 22H46q-8-12 4-22z"/></g></g></svg>`;
-}
+ eq=eq||{};const ci=eq.c||0,c=CH[ci]||{t:0,k:0,h:0},t=c.t,k=c.k,lim=ci>=35,si=eq.s||0,limS=si>=35,u="a"+(_u++),f=si%5;
+ const sl=SKL[t%7],sd=SKD[t%7],sc=SCOL(si),h=c.h;
+ const bl=lim?"#ff9bc8":`hsl(${h},70%,64%)`,bd=lim?"#7a0060":`hsl(${h},65%,36%)`;
+ const acc=[`<path d="M38 22l4-18 14 12zM82 22l-4-18-14 12z" fill="url(#${u}h)" stroke="${sd}" stroke-width="1.5"/>`,`<path d="M60 12V0" stroke="#888" stroke-width="3"/><circle cx="60" cy="2" r="4.5" fill="#f44"/><circle cx="58.5" cy=".5" r="1.3" fill="#fff"/>`,`<path d="M48 14l-8-14M72 14l8-14" stroke="#4c4" stroke-width="3"/><circle cx="40" cy="0" r="4" fill="#4c4"/><circle cx="80" cy="0" r="4" fill="#4c4"/>`,`<path d="M34 24L60-8 86 24z" fill="#d33" stroke="#800" stroke-width="2"/><circle cx="60" cy="-8" r="4" fill="#fff"/>`,`<path d="M54 42h12l-6 9z" fill="#fa0" stroke="#a60" stroke-width="1.5"/>`,`<ellipse cx="48" cy="6" rx="6" ry="16" fill="url(#${u}h)" stroke="${sd}"/><ellipse cx="72" cy="6" rx="6" ry="16" fill="url(#${u}h)" stroke="${sd}"/>`,`<path d="M38 18l-6-16 16 10zM82 18l6-16-16 10z" fill="#c33" stroke="#700" stroke-width="1.5"/>`][t%7];
+ const eye=(x,y,r,cl="#fff")=>`<ellipse cx="${x}" cy="${y}" rx="${r}" ry="${r*1.15}" fill="${cl}" stroke="#0003"/>`;
+ const ey=[`<path d="M45 37q5-7 11 0M64 37q5-7 11 0" stroke="#222" stroke-width="3.2" fill="none" stroke-linecap="round"/>`,`${eye(51,37,5)}${eye(69,37,5)}<circle cx="52" cy="38" r="2.6"/><circle cx="68" cy="38" r="2.6"/><circle cx="53" cy="36.6" r=".9" fill="#fff"/><circle cx="69" cy="36.6" r=".9" fill="#fff"/><path d="M43 28l13 6M77 28l-13 6" stroke="#222" stroke-width="3.2" stroke-linecap="round"/>`,`<path d="M45 38h12M63 38h12" stroke="#222" stroke-width="3.2" stroke-linecap="round"/><text x="78" y="26" font-size="9" fill="#fff" font-weight="900">z</text>`,`${eye(51,37,5)}${eye(69,37,5)}<circle cx="51" cy="37" r="3.4" fill="#e22"/><circle cx="69" cy="37" r="3.4" fill="#e22"/><circle cx="52" cy="36" r="1" fill="#fff"/><circle cx="70" cy="36" r="1" fill="#fff"/>`,`${eye(51,36,6.5)}${eye(69,37,4.5)}<circle cx="53" cy="37" r="2.3"/><circle cx="68" cy="37" r="1.7"/><circle cx="54" cy="35.6" r=".8" fill="#fff"/>`][k];
+ const shoe=x=>{const hh=f==1?20:f==4?12:12,w=f==2?34:30;return `<g><rect x="${x}" y="${132-hh}" width="${w}" height="${hh}" rx="${f==4?9:6}" fill="${limS?`url(#${u}s)`:sc}" stroke="#0006" stroke-width="1.5"/><rect x="${x}" y="129" width="${w}" height="5" rx="2.5" fill="${f==3?'#5fe0ff':'#fff'}"/><path d="M${x+6} ${132-hh+3}h${w-12}" stroke="#fff8" stroke-width="2"/>${f==1?`<path d="M${x+5} 118h8M${x+5} 122h8" stroke="#fff" stroke-width="1.5"/>`:''}</g>`};
+ return `<svg viewBox="0 -10 140 150" width="${sz}" height="${sz*1.25}"><defs><linearGradient id="${u}b" x1="0" y1="0" x2="1" y2="1"><stop offset="0" stop-color="${bl}"/><stop offset="1" stop-color="${bd}"/></linearGradient><radialGradient id="${u}h" cx=".35" cy=".3" r=".85"><stop offset="0" stop-color="${sl}"/><stop offset="1" stop-color="${sd}"/></radialGradient><linearGradient id="${u}s"><stop offset="0" stop-color="#ff5fa2"/><stop offset=".5" stop-color="#c4259c"/><stop offset="1" stop-color="#7a0060"/></linearGradient></defs>
+<ellipse cx="60" cy="134" rx="42" ry="6" fill="#0005"/>
+<rect x="40" y="95" width="14" height="26" rx="6" fill="#2b2b45"/><rect x="66" y="95" width="14" height="26" rx="6" fill="#2b2b45"/>
+${shoe(28)}${shoe(62)}
+<rect x="30" y="68" width="14" height="30" rx="7" fill="url(#${u}b)" transform="rotate(8 37 70)"/><rect x="76" y="68" width="14" height="30" rx="7" fill="url(#${u}b)" transform="rotate(-8 83 70)"/>
+<rect x="32" y="52" width="56" height="54" rx="22" fill="url(#${u}b)" stroke="#0004" stroke-width="2"/>
+<path d="M50 54v18M70 54v18" stroke="#fff9" stroke-width="2" stroke-linecap="round"/><rect x="46" y="82" width="28" height="12" rx="5" fill="#0002"/>
+<circle cx="31" cy="98" r="8" fill="url(#${u}h)" stroke="${sd}"/><circle cx="89" cy="98" r="8" fill="url(#${u}h)" stroke="${sd}"/>
+<g transform="translate(76 76) scale(.3)">${poopIn(poopColor||eq.p||0)}</g>
+<circle cx="60" cy="38" r="26" fill="url(#${u}h)" stroke="${sd}" stroke-width="1.5"/>
+${acc}${ey}
+<ellipse cx="46" cy="47" rx="4.5" ry="3" fill="#ff5fa2" opacity=".35"/><ellipse cx="74" cy="47" rx="4.5" ry="3" fill="#ff5fa2" opacity=".35"/>
+<path d="M51 50q9 9 18 0" stroke="#222" stroke-width="3" fill="none" stroke-linecap="round"/>
+<ellipse cx="50" cy="24" rx="9" ry="4" fill="#fff" opacity=".25" transform="rotate(-20 50 24)"/></svg>`}
 
 const logo=()=>`<div class="lg">${poopSVG(0,56,1)}<div class="lt">ГОВНО<br>ДАВЫ</div></div>`;
 const medal=n=>`<div style="width:78px;text-align:center;font-size:11px"><svg viewBox="0 0 40 50" width="46"><path d="M12 0h6l4 14h-6zM28 0h-6l-4 14h6z" fill="#c33"/><circle cx="20" cy="30" r="14" fill="#ffb02e" stroke="#a56200" stroke-width="2"/><path d="M20 21l2.8 6 6.2.6-4.7 4.2 1.4 6.2L20 34.6 14.3 38l1.4-6.2L11 27.6l6.2-.6z" fill="#fff3b0"/></svg><div>${esc(n)}</div></div>`;
@@ -232,14 +253,152 @@ const LIMITED_SKINS={
 const IT={c:{N:35,n:i=>CH[i]?.n||("Лимит "+i),p:i=>300+i*120,pv:i=>ava({c:i},64)},s:{N:35,n:SN,p:i=>200+i*90,pv:shoeSVG},p:{N:30,n:PN,p:i=>100+i*60,pv:i=>poopSVG(i,64)}};
 const MAPS=["Туалетный лабиринт","Канализация","Помойка у школы","Ферма","Космическая станция","Подводная лодка","Пустыня","Заброшенный завод","Ледяная пещера","Радужный парк"];
 const MC=["#2b8a3e,#0b3d1a","#1c5d99,#0a1f3a","#7a4a21,#2a1708","#c9a227,#4d3a00","#6b3fa0,#120a22","#0b7285,#02242b","#e8a33d,#7a4000","#555,#111","#9bd7ff,#2b5d8a","#ff5fa2,#4a1d99"];
-const rank=u=>u.admin?10000:Math.floor((u.pts||0)/100)+1;
+const rank=u=>u.admin?100000:Math.min(100000,Math.floor((u.pts||0)/100)+1);
 const poopDmg=u=>10+((u.poopLvl||1)-1)*2;
 
 let mode=5,U=null,nk=localStorage.getItem("gd_nk"),cur="auth",tab="c",reveal="",PL={},busy=false,closed=null,unsub=null;
 let roomCode=null,roomData=null,roomUnsub=null,battleUnsub=null,mmTimeout=null,botInterval=null,isTraining=false,rematchUnsub=null;
 let viewedNick=null,viewedData=null,inviteUnsub=null;
+let clanData=null,clanUnsub=null,ct="c",g3=null;const ONL={},watched={};const tm=p=>p.team||"A";
+const dot=n=>`<i style="display:inline-block;width:9px;height:9px;border-radius:50%;margin-right:5px;background:${ONL[n]?'#3f6':'#666'}"></i>`;
+const clanLog=()=>Object.values(clanData?.chat||{}).sort((a,b)=>a.t-b.t).slice(-40).map(m=>`<div><b>${esc(m.nick)}:</b> ${esc(m.text)}</div>`).join("")||'<i style="color:var(--mut)">Пусто</i>';
+window.sendClanChat=async()=>{const t=($("#cci")?.value||"").trim();if(!t||!U.clan)return;$("#cci").value="";await push(ref(db,"clans/"+U.clan+"/chat"),{nick:U.nick,text:t.slice(0,120),t:Date.now()})};
+const tile=(ic,t)=>`<div style="text-align:center;font-size:15px;font-weight:800"><span style="display:inline-block;transform:scale(1.8);margin:10px 0">${ic}</span><br>${t}</div>`;
+function roulette(prize){return new Promise(res=>{
+  const ov=document.createElement("div");
+  ov.style.cssText="position:fixed;inset:0;background:rgba(0,0,0,.92);z-index:300;display:flex;flex-direction:column;align-items:center;justify-content:center";
+  const pool=()=>[tile(ico.coin,50+rnd(300)),tile(ico.gem,1+rnd(5)),tile(ico.star,"+"+(20+rnd(80))),tile(ico.up,"+"+(30+rnd(50))),`<div>${shoeSVG(rnd(35))}</div>`,`<div style="height:100px;overflow:hidden">${ava({c:rnd(35)},70)}</div>`];
+  const N=50,win=42,items=Array.from({length:N},()=>{const p=pool();return p[rnd(p.length)]});items[win]=prize;
+  ov.innerHTML=`<h2>Открываем...</h2><div id="rv" style="position:relative;width:100%;overflow:hidden;padding:14px 0"><div id="rs" style="display:flex;transition:none">${items.map((h,i)=>`<div style="flex:none;width:100px;height:130px;margin:0 5px;background:var(--glass);border:2px solid ${i==win?'var(--ac)':'rgba(255,255,255,.1)'};border-radius:14px;display:flex;align-items:center;justify-content:center">${h}</div>`).join("")}</div><div style="position:absolute;left:50%;top:0;bottom:0;width:4px;margin-left:-2px;background:var(--ac);box-shadow:0 0 14px var(--ac)"></div></div><button id="rok" style="display:none;margin-top:16px" class="big">ЗАБРАТЬ</button>`;
+  document.body.appendChild(ov);
+  const rs=ov.querySelector("#rs"),vw=innerWidth,off=(Math.random()-.5)*70;
+  let tk=setInterval(()=>sfx.click(),120);
+  requestAnimationFrame(()=>requestAnimationFrame(()=>{rs.style.transition="transform 5s cubic-bezier(.08,.6,.12,1)";rs.style.transform=`translateX(${-(win*110+55-vw/2)+off}px)`}));
+  setTimeout(()=>{clearInterval(tk);sfx.win();const b=ov.querySelector("#rok");b.style.display="block";b.onclick=()=>{ov.remove();res()}},5200)})}
+const start3D=(()=>{
+const SHOE=["#e33","#37e","#3b5","#fc3","#f7a","#333","#eee"],SK=["#ffd9b0","#b9c4cc","#8fe58f","#ffd9b0","#99aabb","#ffd9b0","#c9a0e8"];
+// [земля, небо, форма препятствий, цвет препятствий]
+const TH=[[0x4a7c3a,0x9ad0e0,"box",0x7a6a50],[0x2a3a30,0x14201a,"cyl",0x556655],[0x5a4a3a,0x8a9aa0,"box",0x8a5a2a],[0x6b8e23,0x87ceeb,"cyl",0xa0522d],[0x20203a,0x05050f,"box",0xaaaabb],[0x0b5560,0x02242b,"sph",0x2a9aa0],[0xe8a33d,0xf5d9a0,"cone",0xb86a1d],[0x444444,0x222222,"cyl",0x888888],[0xcfeaff,0x9bd7ff,"cone",0x7fb8e8],[0xff8fc0,0x6a3dbb,"sph",0xffd166]];
+const rainbow=[];
+const pm=i=>{if(i>=35){return new THREE.MeshStandardMaterial({color:0xff5fa2,metalness:.8,roughness:.25,emissive:0x550033})}
+ if(i==0)return new THREE.MeshStandardMaterial({color:0x7a4a21,roughness:.6});
+ if(i%6==5){const m=new THREE.MeshStandardMaterial({color:0xff3333,roughness:.4});rainbow.push(m);return m}
+ if(i%6==4)return new THREE.MeshStandardMaterial({color:0xe8b100,metalness:.9,roughness:.25});
+ if(i%6==3)return new THREE.MeshStandardMaterial({color:0x2e8b3d,roughness:.5});
+ return new THREE.MeshStandardMaterial({color:new THREE.Color().setHSL((i*37%360)/360,.7,.4),roughness:.55})};
+const M=(c,o={})=>new THREE.MeshStandardMaterial({color:c,roughness:.6,...o});
+const add=(g,geo,mat,x=0,y=0,z=0)=>{const m=new THREE.Mesh(geo,mat);m.position.set(x,y,z);g.add(m);return m};
+function poop(i,s=1){const g=new THREE.Group(),m=pm(i);
+ add(g,new THREE.SphereGeometry(.2,12,8),m).scale.set(1.3,.6,1.3);
+ const a=add(g,new THREE.SphereGeometry(.15,12,8),m,0,.13,0);a.scale.set(1.2,.6,1.2);
+ add(g,new THREE.ConeGeometry(.1,.2,10),m,0,.3,0);g.scale.setScalar(s);return g}
+function shoes(g,s){const f=s%5,ci=(s/5|0)%7;
+ const c=s<3?["#eee","#333","#e33"][s]:SHOE[ci],mat=s>=35?M(0xff5fa2,{metalness:.8,roughness:.25}):M(c);
+ [-.16,.16].forEach(x=>{
+  if(f==0)add(g,new THREE.BoxGeometry(.2,.12,.34),mat,x,.06,.05);
+  if(f==1){add(g,new THREE.BoxGeometry(.2,.28,.3),mat,x,.14,.03)}
+  if(f==2){add(g,new THREE.BoxGeometry(.2,.1,.26),mat,x,.05,0);const k=add(g,new THREE.ConeGeometry(.1,.25,8),mat,x,.06,.27);k.rotation.x=Math.PI/2}
+  if(f==3){add(g,new THREE.BoxGeometry(.2,.12,.34),mat,x,.08,.05);add(g,new THREE.BoxGeometry(.22,.04,.36),M(0x5fe0ff,{emissive:0x5fe0ff,emissiveIntensity:1}),x,.02,.05)}
+  if(f==4)add(g,new THREE.SphereGeometry(.17,10,8),mat,x,.1,.04).scale.set(1,.7,1.4);
+  add(g,new THREE.BoxGeometry(.21,.03,.35),M(0xffffff),x,.015,.05)})}
+function makeChar(eq){eq=eq||{};const c=eq.c||0,t=(c/5|0)%7,k=c%5,g=new THREE.Group();
+ const bm=c>=35?M(0xff5fa2,{metalness:.7,roughness:.3}):M(new THREE.Color().setHSL((c*47%360)/360,.65,.55));
+ const sk=M(SK[t]);
+ const sh=new THREE.Group();shoes(sh,eq.s||0);g.add(sh);
+ [-.16,.16].forEach(x=>add(g,new THREE.CylinderGeometry(.07,.07,.4),M(0x2b2b45),x,.3,0));
+ add(g,new THREE.CapsuleGeometry(.3,.4,6,12),bm,0,.95,0);
+ add(g,new THREE.SphereGeometry(.28,16,12),sk,0,1.55,0);
+ [-.1,.1].forEach(x=>{add(g,new THREE.SphereGeometry(.06,8,8),M(0xffffff),x,1.58,.24);add(g,new THREE.SphereGeometry(.03,8,8),M(k==3?0xee2222:0x111111),x,1.58,.29)});
+ if(t==0)[-.15,.15].forEach(x=>add(g,new THREE.ConeGeometry(.08,.25,6),sk,x,1.9,0));
+ if(t==1){add(g,new THREE.CylinderGeometry(.015,.015,.3),M(0x888888),0,1.95,0);add(g,new THREE.SphereGeometry(.05),M(0xff4444),0,2.12,0)}
+ if(t==2)[-.12,.12].forEach(x=>{add(g,new THREE.CylinderGeometry(.015,.015,.3),M(0x44cc44),x,1.95,0);add(g,new THREE.SphereGeometry(.05),M(0x44cc44),x,2.12,0)});
+ if(t==3)add(g,new THREE.ConeGeometry(.28,.45,12),M(0xdd3333),0,1.98,0);
+ if(t==4)add(g,new THREE.ConeGeometry(.06,.14,8),M(0xffaa00),0,1.5,.34).rotation.x=Math.PI/2;
+ if(t==5)[-.1,.1].forEach(x=>add(g,new THREE.CapsuleGeometry(.05,.3,4,8),sk,x,2.05,0));
+ if(t==6)[-.15,.15].forEach(x=>add(g,new THREE.ConeGeometry(.06,.22,6),M(0xcc3333),x,1.88,0));
+ [-.38,.38].forEach(x=>add(g,new THREE.SphereGeometry(.08),sk,x,.9,0));
+ const p=poop(eq.p||0,1.1);p.position.set(.42,1.0,.18);g.add(p);
+ return g}
+function label(nick,hp,me){const cv=document.createElement("canvas");cv.width=256;cv.height=64;const tex=new THREE.CanvasTexture(cv);
+ const sp=new THREE.Sprite(new THREE.SpriteMaterial({map:tex,depthTest:false}));sp.scale.set(1.8,.45,1);sp.position.y=2.45;
+ sp.draw=h=>{const x=cv.getContext("2d");x.clearRect(0,0,256,64);x.font="bold 26px sans-serif";x.textAlign="center";x.fillStyle=me?"#ffb02e":"#fff";x.strokeStyle="#000";x.lineWidth=4;x.strokeText(nick,128,24);x.fillText(nick,128,24);
+  x.fillStyle="#000a";x.fillRect(28,38,200,16);x.fillStyle=h>100?"#5f8":h>50?"#fc3":"#f55";x.fillRect(30,40,196*Math.max(0,h)/200,12);tex.needsUpdate=true};
+ sp.draw(hp);return sp}
 
-const top=()=>`<div class="top"><div style="width:36px;height:40px;overflow:hidden;border-radius:10px">${ava(U.eq,36,U.eq?.p)}</div><b>${esc(U.nick)}${U.admin?ico.shield:""}</b><span class="cur">${ico.star}${rank(U)}</span><span class="cur">${ico.coin}${U.coins||0}</span><span class="cur">${ico.gem}${U.gems||0}</span><span class="cur">${ico.up}${U.up||0}</span></div>`;
+function start3D(o){
+ const {root,me,mapId=0,mode=5,onHit,onSuper,onReact,dmg=10}=o;
+ let S={players:o.players||{}};const th=TH[mapId%10],R=mode>5?55:32;
+ const scene=new THREE.Scene();scene.background=new THREE.Color(th[1]);scene.fog=new THREE.Fog(th[1],20,R*2.2);
+ const cam=new THREE.PerspectiveCamera(70,innerWidth/innerHeight,.1,300);cam.rotation.order="YXZ";
+ const ren=new THREE.WebGLRenderer({antialias:true});ren.setPixelRatio(Math.min(devicePixelRatio,2));ren.setSize(innerWidth,innerHeight);
+ const cv=ren.domElement;cv.style.cssText="position:absolute;inset:0;z-index:1;touch-action:none";root.prepend(cv);
+ const ar=root.querySelector("#arena");if(ar)ar.style.display="none";
+ scene.add(new THREE.HemisphereLight(0xffffff,0x333344,1.1));const sun=new THREE.DirectionalLight(0xffffff,1.2);sun.position.set(30,60,20);scene.add(sun);
+ const fl=new THREE.Mesh(new THREE.CircleGeometry(R*1.1,48),M(th[0]));fl.rotation.x=-Math.PI/2;scene.add(fl);
+ const wall=new THREE.Mesh(new THREE.CylinderGeometry(R*1.1,R*1.1,6,48,1,true),M(th[3],{side:THREE.BackSide}));wall.position.y=3;scene.add(wall);
+ let seed=mapId*977+13;const rr=()=>(seed=(seed*16807)%2147483647)/2147483647;
+ const obs=[],obm=[];
+ for(let i=0;i<R/2.2;i++){const a=rr()*6.283,d=rr()*R*.65,x=Math.cos(a)*d,z=Math.sin(a)*d,s=1+rr()*2.2;let geo,h=s*1.6;
+  if(th[2]=="box")geo=new THREE.BoxGeometry(s*1.4,h*1.4,s*1.4);else if(th[2]=="cyl")geo=new THREE.CylinderGeometry(s*.6,s*.6,h*1.6,12);else if(th[2]=="sph"){geo=new THREE.SphereGeometry(s*.9,14,10)}else geo=new THREE.ConeGeometry(s*.9,h*2,10);
+  const m=new THREE.Mesh(geo,M(th[3]));geo.computeBoundingBox();const hh=geo.boundingBox.max.y;m.position.set(x,hh,z);m.rotation.y=rr()*3;scene.add(m);obm.push(m);obs.push({x,z,r:s*.9})}
+ const P={};let order=[];
+ const spawn=k=>{const n=Math.max(order.length,1),i=order.indexOf(k),a=6.283*i/n;return{x:Math.sin(a)*R*.82,z:Math.cos(a)*R*.82,a}};
+ const sync=()=>{order=Object.keys(S.players).sort();
+  order.forEach(k=>{const p=S.players[k];if(!P[k]){const g=makeChar(p.eq),sp=spawn(k),lb=label(p.nick,p.hp,k==me),hb=new THREE.Mesh(new THREE.CylinderGeometry(.6,.6,2.2),new THREE.MeshBasicMaterial({visible:false}));
+    hb.position.y=1.1;hb.userData.id=k;g.add(hb);g.add(lb);g.position.set(sp.x,0,sp.z);if(k==me)g.visible=false;scene.add(g);P[k]={g,lb,hb,base:sp,ph:Math.random()*6,hp:p.hp}}
+   const q=P[k];if(q.hp!==p.hp){q.lb.draw(p.hp);if(k==me&&p.hp<q.hp){flash.style.opacity=.5;setTimeout(()=>flash.style.opacity=0,150)}q.hp=p.hp}
+   const dead=!p.alive||p.hp<=0;q.dead=dead;q.hb.visible=!dead;q.g.rotation.z=dead?1.5:0;q.g.position.y=dead?.3:0});
+  Object.keys(P).forEach(k=>{if(!S.players[k]){scene.remove(P[k].g);delete P[k]}})};
+ const ui=document.createElement("div");ui.style.cssText="position:absolute;inset:0;z-index:2;pointer-events:none";
+ ui.innerHTML=`<div style="position:absolute;left:50%;top:50%;width:34px;height:34px;transform:translate(-50%,-50%);border:2px solid #fff;border-radius:50%;box-shadow:0 0 6px #000"><i style="position:absolute;left:50%;top:50%;width:4px;height:4px;margin:-2px;background:#f33;border-radius:50%"></i></div><div id="fl3" style="position:absolute;inset:0;background:radial-gradient(transparent 40%,#f00);opacity:0;transition:opacity .2s"></div>`;
+ root.appendChild(ui);const flash=ui.querySelector("#fl3");
+ const joy=document.createElement("div");joy.style.cssText="position:absolute;left:18px;bottom:150px;width:110px;height:110px;border-radius:50%;background:rgba(255,255,255,.12);border:2px solid rgba(255,255,255,.3);z-index:3;touch-action:none";
+ const knob=document.createElement("div");knob.style.cssText="position:absolute;left:35px;top:35px;width:40px;height:40px;border-radius:50%;background:rgba(255,176,46,.8)";joy.appendChild(knob);root.appendChild(joy);
+ const mv={x:0,y:0};let jp=null;
+ joy.onpointerdown=e=>{jp=e.pointerId;joy.setPointerCapture(jp);jm(e)};
+ const jm=e=>{if(e.pointerId!==jp)return;const r=joy.getBoundingClientRect();let dx=(e.clientX-r.left-55)/45,dy=(e.clientY-r.top-55)/45;const l=Math.hypot(dx,dy);if(l>1){dx/=l;dy/=l}mv.x=dx;mv.y=dy;knob.style.left=35+dx*35+"px";knob.style.top=35+dy*35+"px"};
+ joy.onpointermove=jm;joy.onpointerup=joy.onpointercancel=()=>{jp=null;mv.x=mv.y=0;knob.style.left=knob.style.top="35px"};
+ const sp0=spawn(me);let yaw=0,pitch=0,pos=new THREE.Vector3(0,1.6,0),lp=null;
+ const place=()=>{const s=spawn(me);pos.set(s.x,1.6,s.z);yaw=s.a};
+ cv.onpointerdown=e=>{lp=e.pointerId;cv.setPointerCapture(lp);cv._x=e.clientX;cv._y=e.clientY};
+ cv.onpointermove=e=>{if(e.pointerId!==lp)return;yaw-=(e.clientX-cv._x)*.006;pitch=Math.max(-1.2,Math.min(1.2,pitch-(e.clientY-cv._y)*.006));cv._x=e.clientX;cv._y=e.clientY};
+ cv.onpointerup=cv.onpointercancel=()=>lp=null;
+ const ray=new THREE.Raycaster(),shots=[];
+ const proj=(to,col,s=1)=>{const m=poop(S.players[me]?.eq?.p||0,s);m.position.copy(pos).add(new THREE.Vector3(.3,-.3,0).applyEuler(cam.rotation));scene.add(m);shots.push({m,to,t:0,from:m.position.clone()})};
+ const aim=()=>{ray.setFromCamera({x:0,y:0},cam);const t=Object.entries(P).filter(([k,q])=>k!=me&&!q.dead&&(!o.teams||(S.players[k].team||'A')!==((S.players[me]||{}).team||'A'))).map(([k,q])=>q.hb);const h=ray.intersectObjects([...t,...obm],false)[0];return h};
+ const fire=()=>{const p=S.players[me];if(!p||!p.alive||p.hp<=0)return;const h=aim();
+  const to=h?h.point.clone():cam.getWorldDirection(new THREE.Vector3()).multiplyScalar(60).add(pos);proj(to);
+  if(h&&h.object.userData.id)onHit(h.object.userData.id,dmg,false)};
+ const sup=()=>{const p=S.players[me];if(!p||(p.superCharge||0)<100){return o.onFail&&o.onFail()}
+  Object.entries(P).forEach(([k,q],i)=>{if(k==me||q.dead||(o.teams&&(S.players[k].team||'A')===(S.players[me].team||'A')))return;if(q.g.position.distanceTo(pos)<R*.9){setTimeout(()=>proj(q.g.position.clone().setY(1)),i*40);onHit(k,dmg*8,true)}});onSuper()};
+ const E={like:"👍",love:"❤️",skull:"💀",poop:"💩"};
+ const showR=(k,r)=>{const q=P[k];if(!q||k==me)return;const c=document.createElement("canvas");c.width=c.height=128;const x=c.getContext("2d");x.font="96px serif";x.textAlign="center";x.fillText(E[r],64,100);
+  const s=new THREE.Sprite(new THREE.SpriteMaterial({map:new THREE.CanvasTexture(c),depthTest:false}));s.scale.set(1,1,1);s.position.y=3;q.g.add(s);let t=0;const f=()=>{t+=.02;s.position.y=3+t*2;s.material.opacity=1-t;if(t<1)requestAnimationFrame(f);else q.g.remove(s)};f()};
+ const q=s=>root.querySelector(s);
+ q("#btn-shoot").onclick=fire;q("#btn-super").onclick=sup;
+ root.querySelectorAll("[data-r]").forEach(b=>b.onclick=e=>{e.stopPropagation();const r=b.dataset.r;const d=document.createElement("div");d.textContent=E[r];d.style.cssText="position:absolute;left:50%;top:40%;font-size:60px;z-index:5;transition:all 1.2s;pointer-events:none";root.appendChild(d);requestAnimationFrame(()=>{d.style.top="15%";d.style.opacity=0});setTimeout(()=>d.remove(),1300);onReact&&onReact(r)});
+ const seen={};
+ let raf,last=performance.now();
+ const loop=t=>{raf=requestAnimationFrame(loop);const dt=Math.min(.05,(t-last)/1000);last=t;const ts=t/1000;
+  rainbow.forEach(m=>m.color.setHSL((ts*.3)%1,.9,.5));
+  const sp=4.5*dt;pos.x+=(-Math.sin(yaw)*-mv.y+Math.cos(yaw)*mv.x)*sp;pos.z+=(-Math.cos(yaw)*-mv.y-Math.sin(yaw)*mv.x)*sp;
+  const d=Math.hypot(pos.x,pos.z);if(d>R-1.5){pos.x*=(R-1.5)/d;pos.z*=(R-1.5)/d}
+  obs.forEach(b=>{const dx=pos.x-b.x,dz=pos.z-b.z,l=Math.hypot(dx,dz),m=b.r+.6;if(l<m){pos.x=b.x+dx/l*m;pos.z=b.z+dz/l*m}});
+  cam.position.copy(pos);cam.rotation.set(pitch,yaw,0);
+  Object.entries(P).forEach(([k,q])=>{if(k==me||q.dead)return;const i=order.indexOf(k);q.g.position.x=q.base.x+Math.cos(ts*.5+q.ph)*3;q.g.position.z=q.base.z+Math.sin(ts*.5+q.ph)*3;q.g.position.y=Math.abs(Math.sin(ts*4+q.ph))*.08;q.g.rotation.y=Math.atan2(pos.x-q.g.position.x,pos.z-q.g.position.z)});
+  for(let i=shots.length-1;i>=0;i--){const s=shots[i];s.t+=dt*3;s.m.position.lerpVectors(s.from,s.to,Math.min(1,s.t));s.m.rotation.x+=.3;if(s.t>=1){scene.remove(s.m);shots.splice(i,1)}}
+  ren.render(scene,cam)};
+ sync();place();raf=requestAnimationFrame(loop);
+ const rs=()=>{cam.aspect=innerWidth/innerHeight;cam.updateProjectionMatrix();ren.setSize(innerWidth,innerHeight)};addEventListener("resize",rs);
+ return{update(pl){S.players=pl;sync()},
+  reactAll(re){Object.entries(re||{}).forEach(([k,v])=>{if(k!==me&&v.t>(seen[k]||0)){seen[k]=v.t;if(Date.now()-v.t<4000)showR(k,v.r)}})},
+  destroy(){cancelAnimationFrame(raf);removeEventListener("resize",rs);ren.dispose();cv.remove();ui.remove();joy.remove()}}
+}
+
+return start3D})();
+
+
+const top=()=>`<div class="top"><div style="width:36px;height:40px;overflow:hidden;border-radius:10px">${ava(U.eq,36,U.eq?.p)}</div><b>${esc(U.nick)}${U.admin?ico.shield:""}<small style="color:var(--mut);font-weight:400"> #${U.id}</small></b><span class="cur">${ico.star}${rank(U)}</span><span class="cur">${ico.coin}${U.coins||0}</span><span class="cur">${ico.gem}${U.gems||0}</span><span class="cur">${ico.up}${U.up||0}</span></div>`;
 const back=`<button class="back" data-a="go" data-s="menu">← Назад</button>`;
 
 const SC={};
@@ -249,9 +408,9 @@ SC.auth=()=>`<div class="c" style="padding-top:10vh">${logo()}<p style="color:va
 SC.pick=()=>`<div class="c"><h2>Добро пожаловать!</h2><p>Выбери первые кроссовки в подарок.</p><div class="grid">${[0,1,2].map(i=>`<div class="it">${shoeSVG(i)}<b>${SN(i)}</b><button data-a="pickS" data-i="${i}">Взять</button></div>`).join("")}</div></div>`;
 
 SC.menu=()=>`${top()}<div class="menu-wrap"><div class="menu-grid">
-<div class="menu-side"><div class="profile-mini"><div style="width:56px;height:64px;margin:0 auto;overflow:hidden">${ava(U.eq,56,U.eq?.p)}</div><div class="nm">${esc(U.nick)}${U.admin?ico.shield:""}</div><div class="rk">${ico.star} ${rank(U)}</div></div><button class="menu-btn" data-a="go" data-s="friends">${ico.friends} Друзья</button><button class="menu-btn" data-a="go" data-s="shop">Магазин</button><button class="menu-btn" data-a="go" data-s="cases">Кейсы</button><button class="menu-btn" data-a="go" data-s="clan">Клан</button></div>
+<div class="menu-side"><div class="profile-mini"><div style="width:56px;height:64px;margin:0 auto;overflow:hidden">${ava(U.eq,56,U.eq?.p)}</div><div class="nm">${esc(U.nick)}${U.admin?ico.shield:""}</div><div class="rk">${ico.star} ${rank(U)}</div><div class="rk">ID: ${U.id}</div></div><button class="menu-btn" data-a="go" data-s="friends">${ico.friends} Друзья</button><button class="menu-btn" data-a="go" data-s="shop">Магазин</button><button class="menu-btn" data-a="go" data-s="cases">Кейсы</button><button class="menu-btn" data-a="go" data-s="clan">Клан</button></div>
 <div class="menu-center">${logo()}<div class="av" style="margin:8px 0">${ava(U.eq,120,U.eq?.p)}</div><button class="play-btn" data-a="quickMatch">ИГРАТЬ</button><button class="menu-btn g" data-a="train">Тренировка</button></div>
-<div class="menu-side"><button class="menu-btn" data-a="go" data-s="profile">Профиль</button><button class="menu-btn" data-a="go" data-s="promo">Промокод</button><button class="menu-btn" data-a="go" data-s="room">Комнаты</button>${U.admin?'<button class="menu-btn g" data-a="go" data-s="admin">Админ</button>':''}</div>
+<div class="menu-side"><button class="menu-btn" data-a="go" data-s="profile">Профиль</button><button class="menu-btn" data-a="go" data-s="promo">Промокод</button><button class="menu-btn" data-a="go" data-s="room">Комнаты</button><button class="menu-btn" data-a="go" data-s="ranks">Лента ранга</button>${U.admin?'<button class="menu-btn g" data-a="go" data-s="admin">Админ</button>':''}</div>
 </div></div>`;
 
 SC.maps=()=>`${top()}${back}<h2 style="text-align:center">Выбери режим и карту</h2><div class="tabs"><button class="${mode==5?"on":""}" data-a="mode" data-k="5">5 на 5</button><button class="${mode==10?"on":""}" data-a="mode" data-k="10">10 на 10</button></div><div class="grid">${MAPS.map((m,i)=>`<div class="map-card" style="background:linear-gradient(135deg,${MC[i]})" data-a="playMap" data-i="${i}"><span>${m}</span></div>`).join("")}</div>`;
@@ -263,8 +422,8 @@ SC.friends=()=>{
   const canInvite=roomCode && roomData && roomData.status==="lobby";
   return `${top()}${back}<div class="c"><h2>${ico.friends} Друзья</h2>
     <div class="card" style="width:100%"><b>Найти игрока</b><input id="findNick" placeholder="Ник или ID"><button data-a="findUser" style="width:100%">🔍 Найти</button></div>
-    ${reqs.length?`<div class="card" style="width:100%;border-color:var(--ac)"><b style="color:var(--ac)">📬 Заявки (${reqs.length})</b>${reqs.map(([n,r])=>`<div style="display:flex;align-items:center;gap:8px;padding:8px 0;border-bottom:1px solid rgba(255,255,255,.06)"><div style="flex:1;text-align:left;cursor:pointer" data-a="viewProfile" data-n="${n}"><b>${esc(n)}</b></div><button data-a="acceptFriend" data-n="${n}" style="padding:6px 12px;font-size:13px">✓</button><button class="g" data-a="declineFriend" data-n="${n}" style="padding:6px 12px;font-size:13px">✗</button></div>`).join("")}</div>`:''}
-    ${friends.length?`<div class="card" style="width:100%"><b>Мои друзья (${friends.length})</b>${friends.map(n=>`<div style="display:flex;align-items:center;gap:8px;padding:8px 0;border-bottom:1px solid rgba(255,255,255,.06)"><div style="flex:1;text-align:left;cursor:pointer" data-a="viewProfile" data-n="${n}"><b>${esc(n)}</b></div>${canInvite?`<button data-a="inviteToLobby" data-n="${n}" style="padding:6px 10px;font-size:12px">${ico.mail}</button>`:''}<button class="g" data-a="viewProfile" data-n="${n}" style="padding:6px 10px;font-size:12px">Профиль</button></div>`).join("")}</div>`:`<p style="color:var(--mut)">У тебя пока нет друзей</p>`}
+    ${reqs.length?`<div class="card" style="width:100%;border-color:var(--ac)"><b style="color:var(--ac)">📬 Заявки (${reqs.length})</b>${reqs.map(([n,r])=>`<div style="display:flex;align-items:center;gap:8px;padding:8px 0;border-bottom:1px solid rgba(255,255,255,.06)"><div style="flex:1;text-align:left;cursor:pointer" data-a="viewProfile" data-n="${n}">${dot(n)}<b>${esc(n)}</b></div><button data-a="acceptFriend" data-n="${n}" style="padding:6px 12px;font-size:13px">✓</button><button class="g" data-a="declineFriend" data-n="${n}" style="padding:6px 12px;font-size:13px">✗</button></div>`).join("")}</div>`:''}
+    ${friends.length?`<div class="card" style="width:100%"><b>Мои друзья (${friends.length})</b>${friends.map(n=>`<div style="display:flex;align-items:center;gap:8px;padding:8px 0;border-bottom:1px solid rgba(255,255,255,.06)"><div style="flex:1;text-align:left;cursor:pointer" data-a="viewProfile" data-n="${n}">${dot(n)}<b>${esc(n)}</b></div>${canInvite?`<button data-a="inviteToLobby" data-n="${n}" style="padding:6px 10px;font-size:12px">${ico.mail}</button>`:''}<button class="g" data-a="viewProfile" data-n="${n}" style="padding:6px 10px;font-size:12px">Профиль</button></div>`).join("")}</div>`:`<p style="color:var(--mut)">У тебя пока нет друзей</p>`}
     ${sent.length?`<div class="card" style="width:100%"><b style="color:var(--mut)">Отправленные (${sent.length})</b>${sent.map(n=>`<div style="padding:6px 0;color:var(--mut)">⏳ ${esc(n)}</div>`).join("")}</div>`:''}
   </div>`;
 };
@@ -279,7 +438,7 @@ SC.userProfile=()=>{
   const canInvite=roomCode && roomData && roomData.status==="lobby";
   const r=rank(v);
   return `${top()}<button class="back" data-a="go" data-s="friends">← Друзья</button>
-  <div class="c"><div class="av">${ava(v.eq,130,v.eq?.p)}</div><h2>${esc(v.nick)} ${v.admin?ico.shield:""}${v.label?`<span class="tag">${esc(v.label)}</span>`:""}</h2><div style="color:var(--mut)">ID: <b>${esc(v.id)}</b></div><div>${ico.star} Ранг ${r}</div><div>${ico.up} Уровень какашки: ${v.poopLvl||1}/20</div>
+  <div class="c"><div class="av">${ava(v.eq,130,v.eq?.p)}</div><h2>${dot(v.nick)}${esc(v.nick)} ${v.admin?ico.shield:""}${v.label?`<span class="tag">${esc(v.label)}</span>`:""}</h2><div style="color:var(--mut)">ID: <b>${esc(v.id)}</b></div><div>${ico.star} Ранг ${r}</div><div>${ico.up} Уровень какашки: ${v.poopLvl||1}/20</div>
   ${v.desc?`<div class="card"><b>Описание</b><p style="margin:8px 0 0">${esc(v.desc)}</p></div>`:''}
   ${v.tg?`<a href="https://t.me/${esc(v.tg)}" target="_blank">Telegram @${esc(v.tg)}</a>`:''}
   <div class="card"><b>Медали</b><div class="row">${Object.values(v.medals||{}).map(medal).join("")||"<span style='color:var(--mut)'>Пока нет</span>"}</div></div>
@@ -315,15 +474,29 @@ SC.shop=()=>{
 };
 
 const freeN=()=>U.cases&&U.cases.d==today()?U.cases.n:2;
-SC.cases=()=>`${top()}${back}<div class="c"><h2>Кейсы</h2><div class="box" id="box"><svg viewBox="0 0 80 80" width="150"><rect x="8" y="26" width="64" height="46" rx="8" fill="#6b3fa0" stroke="#ffb02e" stroke-width="3"/><rect x="8" y="18" width="64" height="16" rx="6" fill="#8a5ad0" stroke="#ffb02e" stroke-width="3"/><rect x="34" y="18" width="12" height="54" fill="#ffb02e"/></svg></div><p>Бесплатных сегодня: <b>${freeN()}</b> · купленных: <b>${U.cx||0}</b></p><button class="big" data-a="open">ОТКРЫТЬ</button>${reveal?`<div class="card">${reveal}</div>`:""}</div>`;
+SC.cases=()=>`${top()}${back}<div class="c"><h2>Кейсы</h2><div class="tabs">${[["c","Обычный"],["r","Редкий"],["g","Золотой"]].map(([k,n])=>`<button class="${ct==k?"on":""}" data-a="ctype" data-k="${k}">${n}</button>`).join("")}</div><div class="box" id="box"><svg viewBox="0 0 80 80" width="150"><rect x="8" y="26" width="64" height="46" rx="8" fill="${ct=="g"?"#d99a00":ct=="r"?"#3d8bff":"#6b3fa0"}" stroke="#ffb02e" stroke-width="3"/><rect x="8" y="18" width="64" height="16" rx="6" fill="${ct=="g"?"#ffd166":ct=="r"?"#6aa8ff":"#8a5ad0"}" stroke="#ffb02e" stroke-width="3"/><rect x="34" y="18" width="12" height="54" fill="#ffb02e"/></svg></div><p style="color:var(--mut);font-size:13px">${ct=="c"?"Монеты, скины, очки":ct=="r"?"Больше скинов":"Только скины и гемы"}</p><p>Бесплатных сегодня: <b>${freeN()}</b> · купленных: <b>${U.cx||0}</b></p><button class="big" data-a="open">ОТКРЫТЬ</button>${reveal?`<div class="card">${reveal}</div>`:""}</div>`;
 
 SC.promo=()=>`${top()}${back}<div class="c"><h2>Промокод</h2><input id="pc" placeholder="Введи код" autocapitalize="characters"><button data-a="promo">Активировать</button></div>`;
 
 SC.profile=()=>{const r=rank(U),med=Object.values(U.medals||{});
-  return `${top()}${back}<div class="c"><div class="av">${ava(U.eq,130,U.eq?.p)}</div><h2>${esc(U.nick)} ${U.admin?ico.shield:""}${U.label?`<span class="tag">${esc(U.label)}</span>`:""}</h2><div style="color:var(--mut)">ID: <b>${esc(U.id)}</b></div><div>${ico.star} Ранг ${r}</div><div>${ico.up} Ур. какашки: ${U.poopLvl||1}/20</div><div class="bar"><i style="width:${U.admin?100:(U.pts||0)%100}%"></i></div>${U.tg?`<a href="https://t.me/${esc(U.tg)}" target="_blank">Telegram @${esc(U.tg)}</a>`:""}<div class="card"><b>Описание</b><textarea id="ds" rows="3" maxlength="200">${esc(U.desc||"")}</textarea><button data-a="saveDesc">Сохранить</button></div><div class="card"><b>Медали</b><div class="row">${med.map(medal).join("")||"<span style='color:var(--mut)'>Пока нет</span>"}</div></div><button class="g" data-a="logout">Выйти</button></div>`;
+  return `${top()}${back}<div class="c"><div class="av">${ava(U.eq,130,U.eq?.p)}</div><h2>${esc(U.nick)} ${U.admin?ico.shield:""}${U.label?`<span class="tag">${esc(U.label)}</span>`:""}</h2><div style="color:var(--mut)">ID: <b>${esc(U.id)}</b></div><div>${ico.star} Ранг ${r}</div><div>${ico.up} Ур. какашки: ${U.poopLvl||1}/20</div><div class="bar"><i style="width:${U.admin?100:(U.pts||0)%100}%"></i></div>${U.tg?`<a href="https://t.me/${esc(U.tg)}" target="_blank">Telegram @${esc(U.tg)}</a>`:""}<div class="card"><b>Описание</b><textarea id="ds" rows="3" maxlength="200">${esc(U.desc||"")}</textarea><b>Telegram</b><input id="tgi" maxlength="32" placeholder="username без @" value="${esc(U.tg||"")}"><button data-a="saveDesc">Сохранить</button></div><div class="card"><b>Медали</b><div class="row">${med.map(medal).join("")||"<span style='color:var(--mut)'>Пока нет</span>"}</div></div><button class="g" data-a="logout">Выйти</button></div>`;
 };
 
-SC.clan=()=>U.clan?`${top()}${back}<div class="c"><h2>Твой клан</h2><p>Ты в клане: <b>${esc(U.clan)}</b></p><button class="g" data-a="leaveClan">Выйти</button></div>`:`${top()}${back}<div class="c"><h2>Клан</h2><p>Создание с 100 ранга (у тебя ${rank(U)})</p><input id="cn" placeholder="Название" maxlength="20"><button data-a="createClan" ${rank(U)<100?"disabled":""}>Создать</button><hr style="width:100%;border-color:rgba(255,255,255,.1);margin:16px 0"><input id="cj" placeholder="Название"><button data-a="joinClan">Вступить</button></div>`;
+SC.clan=()=>{
+ if(U.clan){
+  if(!clanData)return `${top()}${back}<div class="c"><p>Загрузка...</p></div>`;
+  const own=clanData.owner===nk,mem=Object.entries(clanData.members||{}),reqs=Object.entries(clanData.reqs||{});
+  return `${top()}${back}<div class="c"><h2>${esc(clanData.name)}</h2><p style="color:var(--mut)">Участников: ${mem.length}</p>
+  <button class="big" data-a="clanPlay">▶ Лобби клана</button>
+  ${own&&reqs.length?`<div class="card" style="border-color:var(--ac)"><b style="color:var(--ac)">Заявки (${reqs.length})</b>${reqs.map(([k,n])=>`<div style="display:flex;gap:8px;align-items:center;padding:6px 0"><div style="flex:1;text-align:left"><b>${esc(n)}</b></div><button data-a="clanAccept" data-k="${k}" style="padding:6px 12px">✓</button><button class="g" data-a="clanDecline" data-k="${k}" style="padding:6px 12px">✗</button></div>`).join("")}</div>`:""}
+  <div class="card"><b>Состав</b>${mem.map(([k,n])=>`<div style="text-align:left;padding:4px 0">${dot(k)}${esc(n)}${k===clanData.owner?" 👑":""}</div>`).join("")}</div>
+  <div class="card"><b>${ico.chat} Чат клана</b><div id="cl-log" style="max-height:160px;overflow-y:auto;font-size:13px;margin:8px 0;text-align:left">${clanLog()}</div><input id="cci" placeholder="Сообщение..." onkeydown="if(event.key==='Enter')sendClanChat()"></div>
+  <button class="g" data-a="leaveClan">Выйти из клана</button></div>`}
+ return `${top()}${back}<div class="c"><h2>Клан</h2><p>Создание с 100 ранга (у тебя ${rank(U)})</p><input id="cn" placeholder="Название" maxlength="20"><button data-a="createClan" ${rank(U)<100?"disabled":""}>Создать</button><hr style="width:100%;border-color:rgba(255,255,255,.1);margin:16px 0"><input id="cj" placeholder="Название клана"><button data-a="joinClan">Отправить заявку</button></div>`};
+
+SC.ranks=()=>{const r=rank(U),from=Math.max(1,r-2),cl=U.rr||{};
+ return `${top()}${back}<h2 style="text-align:center">Лента ранга</h2><div style="display:flex;gap:8px;overflow-x:auto;padding:12px 4px">${Array.from({length:30},(_,i)=>from+i).filter(n=>n<=100000).map(n=>{const ok=n<=r,got=cl[n],big=n%5==0;
+ return `<div class="it" style="min-width:92px;flex:none;${n==r?'border-color:var(--ac);box-shadow:0 0 18px var(--ac)':''}"><div style="font:900 24px Impact;color:${ok?'var(--ac)':'var(--mut)'}">${n}</div>${big?ico.gem:ico.coin}<div style="font-size:11px">${big?5:n*10}</div>${ok&&!got?`<button data-a="claimRank" data-n="${n}">Взять</button>`:got?'<div>✓</div>':'<div>🔒</div>'}</div>`}).join("")}</div><div class="c"><div class="bar"><i style="width:${U.admin?100:(U.pts||0)%100}%"></i></div><small style="color:var(--mut)">${(U.pts||0)%100}/100 до следующего ранга</small></div>`};
 
 SC.admin=()=>`${top()}${back}<div class="card"><b>ID игрока</b><input id="tid" placeholder="ID" inputmode="numeric">
 <div class="row"><input id="v1" placeholder="Число" type="number" style="width:45%"><button data-a="adm" data-k="coins">Монеты</button><button data-a="adm" data-k="gems">Гемы</button></div>
@@ -346,7 +519,9 @@ SC.lobby=()=>{
   return `${top()}${back}<div class="c"><h2>Комната ${esc(roomCode)}</h2><p style="color:var(--mut);font-size:13px">${MAPS[roomData.map]} · ${roomData.mode}×${roomData.mode} · ${players.length}/20</p>
     ${!youHere?`<div class="card" style="background:rgba(255,95,162,.2);border-color:var(--pk);padding:10px"><b>⚠ Ты не в списке</b><br><button data-a="rejoinRoom" style="margin-top:8px">Переподключиться</button></div>`:''}
     ${isHost?`<div class="card" style="padding:10px"><select id="rmap">${MAPS.map((m,i)=>`<option value="${i}" ${i==roomData.map?"selected":""}>${m}</option>`).join("")}</select><div class="row"><button data-a="setMode" data-k="5" style="background:${roomData.mode==5?"linear-gradient(180deg,#ffc24d,#f09a14)":"#3a2a5e"};color:${roomData.mode==5?"#2a1600":"#fff"}">5×5</button><button data-a="setMode" data-k="10" style="background:${roomData.mode==10?"linear-gradient(180deg,#ffc24d,#f09a14)":"#3a2a5e"};color:${roomData.mode==10?"#2a1600":"#fff"}">10×10</button></div></div>`:''}
-    <div class="card" style="padding:8px;width:100%">${players.map(([k,p])=>`<div style="display:flex;align-items:center;gap:8px;padding:4px 0;border-bottom:1px solid rgba(255,255,255,.06)"><div style="width:36px;height:40px;overflow:hidden;border-radius:8px">${ava(p.eq,36)}</div><div style="flex:1;text-align:left"><b>${esc(p.nick)}</b> <small style="color:var(--mut)">Р${p.rank}</small></div>${isHost&&k!==nk&&!p.bot?`<button class="g" data-a="kick" data-k="${k}" style="padding:2px 6px">${ico.cross}</button>`:''}</div>`).join("")}</div>
+    ${isHost?`<button class="g" data-a="toggleTeam" style="width:100%">${roomData.teamMode?"Режим: КОМАНДЫ (нажми — каждый за себя)":"Режим: каждый за себя (нажми — команды)"}</button>`:(roomData.teamMode?'<p>Командный режим: твоя команда против другой</p>':'')}
+    ${roomData.teamMode?`<div class="row"><button data-a="joinTeam" data-t="A" style="background:linear-gradient(180deg,#4aa8ff,#2060c0);color:#fff">Синие</button><button data-a="joinTeam" data-t="B" style="background:linear-gradient(180deg,#ff6a6a,#c02020);color:#fff">Красные</button></div>`:''}
+    <div class="card" style="padding:8px;width:100%">${players.map(([k,p])=>`<div style="display:flex;align-items:center;gap:8px;padding:4px 0;border-bottom:1px solid rgba(255,255,255,.06)"><div style="width:36px;height:40px;overflow:hidden;border-radius:8px">${ava(p.eq,36)}</div><div style="flex:1;text-align:left">${roomData.teamMode?`<span style="color:${tm(p)=="A"?'#4aa8ff':'#ff6a6a'}">●</span> `:''}<b>${esc(p.nick)}</b> <small style="color:var(--mut)">Р${p.rank}</small></div>${isHost&&k!==nk&&!p.bot?`<button class="g" data-a="kick" data-k="${k}" style="padding:2px 6px">${ico.cross}</button>`:''}</div>`).join("")}</div>
     <div class="card" style="width:100%;padding:12px"><b>${ico.chat} Чат</b><div id="chat-log" style="max-height:120px;overflow-y:auto;font-size:13px;margin:8px 0;text-align:left">${chat.map(m=>`<div><b>${esc(m.nick)}:</b> ${esc(m.text)}</div>`).join("")||'<i style="color:var(--mut)">Пусто</i>'}</div><input id="ci" placeholder="Сообщение..." onkeydown="if(event.key==='Enter')sendChat()"></div>
     ${isHost?`<button class="big" data-a="startRoom">${ico.play}НАЧАТЬ</button>`:`<p style="color:var(--mut)">Ждём хоста...</p>`}
     <button class="g" data-a="leaveRoom">Выйти</button>
@@ -411,7 +586,7 @@ function showInvitePopup(key,inv){
 }
 
 const A={
-  go:d=>{if(d.s=="admin"){get(ref(db,"users")).then(s=>{PL=s.val()||{};go("admin")})}else{go(d.s)}},
+  go:d=>{if(d.s=="admin"){get(ref(db,"users")).then(s=>{PL=s.val()||{};go("admin")})}else if(d.s=="clan"){clanUnsub&&clanUnsub();clanData=null;if(U.clan)clanUnsub=onValue(ref(db,"clans/"+U.clan),s=>{clanData=s.val();if(cur==="clan"){const l=$("#cl-log");if(l&&document.activeElement?.id==="cci"){l.innerHTML=clanLog();l.scrollTop=1e9}else render()}});go("clan")}else{go(d.s)}},
   mode:d=>{mode=+d.k;render()},
   tab:d=>{tab=d.k;render()},
   playMap:d=>{startQuickMatch(+d.i)},
@@ -469,21 +644,23 @@ const A={
   async open(){
     const f=freeN(),x=U.cx||0;
     if(f<=0&&x<=0){sfx.error();return toast("Кейсов нет")}
-    busy=true;
-    const box=$("#box");if(box)box.classList.add("shake");
-    sfx.case();await new Promise(r=>setTimeout(r,1100));
+    busy=true;const box=$("#box");if(box)box.classList.add("shake");sfx.case();await new Promise(r=>setTimeout(r,900));
     const own=U.own||{},un=(t,N)=>Array.from({length:N},(_,i)=>i).filter(i=>!own[t+i]),q=Math.random();
-    let h="";
-    const coins=()=>{const n=50+rnd(350);add("coins",n);return`${ico.coin} ${n} монет`};
-    if(q<.30)h=coins();
-    else if(q<.5){const l=un("s",35);if(l.length){const i=l[rnd(l.length)];await upd({["own/s"+i]:1});h=`Кроссовки: ${SN(i)}<br>${shoeSVG(i)}`}else h=coins()}
-    else if(q<.65){const l=un("c",35);if(l.length){const i=l[rnd(l.length)];await upd({["own/c"+i]:1});h=`Герой: ${CH[i].n}<br>${ava({c:i},80)}`}else h=coins()}
-    else if(q<.82){const n=20+rnd(80);add("pts",n);h=`${ico.star} +${n} очков ранга`}
-    else if(q<.9){const n=30+rnd(50);add("up",n);h=`${ico.up} +${n} очков улучшения`}
-    else{const n=1+rnd(5);add("gems",n);h=`${ico.gem} ${n} гемов`}
-    await upd(f>0?{cases:{d:today(),n:f-1}}:{cx:x-1});
+    const thr={c:[.30,.5,.65,.82,.9],r:[.15,.45,.7,.82,.9],g:[0,.4,.8,.85,.92]}[ct];
+    let h="",pt="";
+    const coins=()=>{const n=50+rnd(350);add("coins",n);pt=tile(ico.coin,n);return`${ico.coin} ${n} монет`};
+    if(q<thr[0])h=coins();
+    else if(q<thr[1]){const l=un("s",35);if(l.length){const i=l[rnd(l.length)];await upd({["own/s"+i]:1});h=`Кроссовки: ${SN(i)}<br>${shoeSVG(i)}`;pt=`<div>${shoeSVG(i)}</div>`}else h=coins()}
+    else if(q<thr[2]){const l=un("c",35);if(l.length){const i=l[rnd(l.length)];await upd({["own/c"+i]:1});h=`Герой: ${CH[i].n}<br>${ava({c:i},80)}`;pt=`<div style="height:100px;overflow:hidden">${ava({c:i},70)}</div>`}else h=coins()}
+    else if(q<thr[3]){const n=20+rnd(80);add("pts",n);h=`${ico.star} +${n} очков ранга`;pt=tile(ico.star,"+"+n)}
+    else if(q<thr[4]){const n=30+rnd(50);add("up",n);h=`${ico.up} +${n} очков улучшения`;pt=tile(ico.up,"+"+n)}
+    else{const n=1+rnd(5)+(ct=="g"?5:0);add("gems",n);h=`${ico.gem} ${n} гемов`;pt=tile(ico.gem,n)}
+    await upd(f>0&&ct=="c"?{cases:{d:today(),n:f-1}}:{cx:Math.max(0,x-(f>0&&ct=="c"?0:1))});
+    await roulette(pt);
     reveal="<b>Тебе выпало:</b><br>"+h;sfx.kill();busy=false;render();
   },
+  ctype:d=>{ct=d.k;render()},
+  
   async promo(){
     const c=$("#pc").value.trim().toUpperCase(),p=PROMO[c];
     if(!p){sfx.error();return toast("Нет кода")}
@@ -493,7 +670,7 @@ const A={
     await upd({["promos/"+c]:1});
     const[t,n]=p;add({c:"coins",g:"gems",k:"cx",p:"pts"}[t],n);sfx.coin();toast("+ "+n);
   },
-  saveDesc:()=>upd({desc:$("#ds").value}).then(()=>{sfx.coin();toast("Сохранено")}),
+  saveDesc:()=>upd({desc:$("#ds").value,tg:($("#tgi").value||"").replace("@","").trim()}).then(()=>{sfx.coin();toast("Сохранено")}),
   logout(){localStorage.removeItem("gd_nk");location.reload()},
   async createClan(){
     const n=$("#cn").value.trim();
@@ -502,17 +679,12 @@ const A={
     const cid=n.toLowerCase().replace(/[^a-zа-я0-9]/g,"");
     if((await get(ref(db,"clans/"+cid))).exists()){sfx.error();return toast("Существует")}
     await set(ref(db,"clans/"+cid),{name:n,owner:nk,members:{[nk]:U.nick},minRank:1});
-    await upd({clan:cid});toast("Создан");render();
+    await upd({clan:cid});toast("Создан");U.clan=cid;A.go({s:"clan"});
   },
-  async joinClan(){
-    const n=$("#cj").value.trim();if(!n)return toast("Имя");
-    const cid=n.toLowerCase().replace(/[^a-zа-я0-9]/g,"");
-    const s=await get(ref(db,"clans/"+cid));
-    if(!s.exists())return toast("Нету");
-    if(rank(U)<(s.val().minRank||1))return toast("Нужен ранг");
-    await update(ref(db,"clans/"+cid+"/members"),{[nk]:U.nick});
-    await upd({clan:cid});toast("Вступил");render();
-  },
+  async joinClan(){const n=$("#cj").value.trim();if(!n)return toast("Имя");const cid=n.toLowerCase().replace(/[^a-zа-я0-9]/g,"");const s=await get(ref(db,"clans/"+cid));if(!s.exists()){sfx.error();return toast("Нету")}if(rank(U)<(s.val().minRank||1))return toast("Нужен ранг");await set(ref(db,`clans/${cid}/reqs/${nk}`),U.nick);sfx.coin();toast("Заявка отправлена")},
+  async clanAccept(d){const c=U.clan;if(clanData?.owner!==nk)return;await update(ref(db,"clans/"+c),{[`members/${d.k}`]:clanData.reqs[d.k],[`reqs/${d.k}`]:null});await update(ref(db,"users/"+d.k),{clan:c});toast("Принят")},
+  async clanDecline(d){if(clanData?.owner!==nk)return;await remove(ref(db,`clans/${U.clan}/reqs/${d.k}`))},
+  async clanPlay(){const code="CL"+U.clan.toUpperCase().slice(0,10);const s=await get(ref(db,"rooms/"+code));if(s.exists()&&s.val().status==="lobby")await joinRoomByCode(code);else{if(s.exists())await remove(ref(db,"rooms/"+code));await createRoomWithMap(0,code)}},
   async leaveClan(){
     if(U.clan){await remove(ref(db,"clans/"+U.clan+"/members/"+nk));await upd({clan:null})}
     render();
@@ -585,6 +757,9 @@ const A={
     await push(ref(db,`users/${t}/invites`),{room:roomCode,from:U.nick,map:roomData.map,mode:roomData.mode,t:Date.now()});
     sfx.mail();toast("Приглашение отправлено "+t);
   },
+  async claimRank(d){const n=+d.n;if(n>rank(U)||U.rr?.[n])return;const r=await runTransaction(ref(db,`users/${nk}/rr/${n}`),c=>c?undefined:1);if(!r.committed)return;if(n%5==0)add("gems",5);else add("coins",n*10);sfx.coin();toast("Награда получена")},
+  async toggleTeam(){if(!roomData||roomData.host!==nk)return;await update(ref(db,"rooms/"+roomCode),{teamMode:!roomData.teamMode})},
+  async joinTeam(d){if(!roomCode)return;await update(ref(db,`rooms/${roomCode}/players/${nk}`),{team:d.t})},
   async adm(d){
     if(!U.admin)return;
     const k=d.k,tx=$("#tx")?.value.trim()||"",v=+$("#v1")?.value;
@@ -638,8 +813,7 @@ function startQuickMatch(mapId,training){
   },3300);
 }
 
-async function createRoomWithMap(mapId){
-  const code=Math.random().toString(36).substring(2,8).toUpperCase();
+async function createRoomWithMap(mapId,code=Math.random().toString(36).substring(2,8).toUpperCase()){
   await set(ref(db,"rooms/"+code),{host:nk,hostId:U.id,map:mapId,mode:mode,status:"lobby",createdAt:Date.now(),players:{[nk]:{nick:U.nick,id:U.id,rank:rank(U),eq:U.eq||{},hp:200,kills:0,alive:true,superCharge:0,poopLvl:U.poopLvl||1}}});
   const dRef=ref(db,"rooms/"+code+"/players/"+nk);
   onDisconnect(dRef).remove();
@@ -649,12 +823,17 @@ async function createRoomWithMap(mapId){
 async function beginBattle(){
   if(!roomData||roomData.host!==nk)return;
   const ups={status:"playing",startedAt:Date.now(),endAt:Date.now()+90000};
-  Object.keys(roomData.players||{}).forEach(p=>{
-    ups[`players/${p}/hp`]=200;
-    ups[`players/${p}/kills`]=0;
-    ups[`players/${p}/alive`]=true;
-    ups[`players/${p}/superCharge`]=0;
+  const pl=roomData.players||{};
+  Object.entries(pl).forEach(([p,v])=>{
+    ups[`players/${p}/hp`]=200;ups[`players/${p}/kills`]=0;ups[`players/${p}/alive`]=true;ups[`players/${p}/superCharge`]=0;
+    if(roomData.teamMode)ups[`players/${p}/team`]=tm(v);
   });
+  if(roomData.teamMode){
+    ["A","B"].forEach(t=>{
+      const n=Object.values(pl).filter(v=>tm(v)===t).length;
+      for(let i=n;i<roomData.mode;i++)ups[`players/bot_${t}${i}`]={nick:"Бот "+t+(i+1),id:"bot",rank:1,eq:{c:rnd(35),s:rnd(35),p:rnd(30)},hp:200,kills:0,alive:true,superCharge:0,bot:true,team:t,poopLvl:1};
+    });
+  }
   await update(ref(db,"rooms/"+roomCode),ups);
   startBots();
 }
@@ -686,10 +865,11 @@ function openBattle(){
   root.appendChild(deco);
   document.body.appendChild(root);
   $("#app").classList.remove("on");
-  setTimeout(()=>setupBattle(),30);
+  setTimeout(()=>{setupBattle();g3&&g3.destroy();g3=start3D({root,me:nk,mapId:roomData.map,mode:roomData.mode,dmg:poopDmg(U),teams:roomData.teamMode,players:roomData.players,onHit:(id,d,sup)=>doDamage(id,d,sup,nk),onSuper:()=>update(ref(db,`rooms/${roomCode}/players/${nk}`),{superCharge:0}),onFail:()=>toast("Не заряжено"),onReact:r=>set(ref(db,`rooms/${roomCode}/react/${nk}`),{r,t:Date.now()})})},60);
 }
 
 function cleanupBattle(){
+  g3&&g3.destroy();g3=null;
   const b=document.getElementById("battle-root");if(b)b.remove();
   const v=$("#victory");if(v)v.style.display="none";
   $("#app").classList.add("on");
@@ -777,7 +957,7 @@ function startBots(){
     const bots=Object.entries(roomData.players||{}).filter(([k,p])=>p.bot&&p.alive&&p.hp>0);
     if(!bots.length)return;
     const [botId]=bots[rnd(bots.length)];
-    const targets=Object.entries(roomData.players||{}).filter(([k,p])=>k!==botId&&p.alive&&p.hp>0);
+    const bt=roomData.players[botId];const targets=Object.entries(roomData.players||{}).filter(([k,p])=>k!==botId&&p.alive&&p.hp>0&&(!roomData.teamMode||tm(p)!==tm(bt)));
     if(!targets.length)return;
     const [tid]=targets[rnd(targets.length)];
     const botCard=document.querySelector(`[data-player="${botId}"]`);
@@ -842,6 +1022,7 @@ function flyPoop(fromEl,toEl,isSuper=false,dmgValue=10){
 }
 
 function updateBattleUI(){
+  if(g3&&roomData&&roomData.players){g3.update(roomData.players);g3.reactAll(roomData.react)}
   if(!roomData||!roomData.players)return;
   const me=roomData.players[nk];if(!me)return;
   const hpEl=document.getElementById("my-hp");
@@ -856,7 +1037,7 @@ function updateBattleUI(){
     document.getElementById("battle-timer").textContent=`${Math.floor(left/60)}:${(left%60).toString().padStart(2,'0')}`;
   }
   const arena=document.getElementById("arena");
-  if(arena){
+  if(arena&&!g3){
     arena.innerHTML=Object.entries(roomData.players).map(([k,p])=>{
       const isMe=k===nk,dead=!p.alive||p.hp<=0,hpPct=Math.max(0,p.hp/2);
       const eq=p.eq||{};
@@ -865,7 +1046,12 @@ function updateBattleUI(){
   }
   if(roomData.host===nk&&roomData.status==="playing"){
     const alive=Object.entries(roomData.players).filter(([k,p])=>p.alive&&p.hp>0);
-    if(alive.length<=1){
+    if(roomData.teamMode){
+      const pl=Object.values(roomData.players),ts=[...new Set(alive.map(([k,p])=>tm(p)))];
+      const sum=t=>pl.filter(p=>tm(p)===t).reduce((a,p)=>a+(p.kills||0),0);
+      if(ts.length<=1)update(ref(db,"rooms/"+roomCode),{status:"finished","gameState/winTeam":ts[0]||"A"});
+      else if(Date.now()>roomData.endAt)update(ref(db,"rooms/"+roomCode),{status:"finished","gameState/winTeam":sum("A")>=sum("B")?"A":"B"});
+    }else if(alive.length<=1){
       const w=alive.length===1?alive[0][0]:null;
       update(ref(db,"rooms/"+roomCode),{status:"finished","gameState/winner":w});
     }else if(Date.now()>roomData.endAt){
@@ -881,7 +1067,7 @@ async function showVictory(){
   const sorted=Object.entries(roomData.players||{}).sort((a,b)=>(b[1].kills||0)-(a[1].kills||0));
   const mvp=sorted[0];
   const winner=roomData.gameState?.winner;
-  const isWin=winner===nk;
+  const isWin=roomData.teamMode?roomData.gameState?.winTeam===tm(roomData.players[nk]||{}):winner===nk;
   const awarded=localStorage.getItem("gd_lastwin_"+roomCode);
   const wasTraining=roomData.training;
   let gainedPts=0,gainedCoins=0,gainedUp=0;
@@ -971,6 +1157,7 @@ function showUpdateNotification(){
 function start(n,scr){
   nk=n;localStorage.setItem("gd_nk",n);
   unsub&&unsub();inviteUnsub&&inviteUnsub();
+  const pr=ref(db,"users/"+n+"/online");set(pr,true);onDisconnect(pr).set(false);
   unsub=onValue(ref(db,"users/"+n),s=>{
     U=s.val();if(!U)return;
     const mig={};
@@ -980,6 +1167,11 @@ function start(n,scr){
     const first=cur==="auth";
     if(first)go(scr||"menu");else render();
     gate();mail();
+    Object.keys(U.friends||{}).forEach(f=>{if(watched[f])return;watched[f]=1;onValue(ref(db,"users/"+f+"/online"),s=>{ONL[f]=s.val();if(cur==="friends"||cur==="userProfile")render()})});
+    const td=today(),yd=new Date(Date.now()-864e5).toISOString().slice(0,10);
+    if(U.streak?.d!==td&&first&&!scr){const sn=U.streak?.d===yd?Math.min(30,(U.streak.n||0)+1):1,bonus=50*Math.min(sn,7);
+      update(ref(db,"users/"+nk),{streak:{d:td,n:sn}});add("coins",bonus);if(sn>=7)add("gems",1);
+      setTimeout(()=>toast(`Серия ${sn} дн.! +${bonus} монет${sn>=7?" и +1 гем":""}`),1500)}
     if(!U.upNotif&&first&&!scr)setTimeout(()=>showUpdateNotification(),800);
   });
   inviteUnsub=onValue(ref(db,"users/"+n+"/invites"),s=>{
@@ -1060,4 +1252,3 @@ async function intro(){
 })();
 </script>
 </body>
-</html>
