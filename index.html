@@ -332,8 +332,8 @@ function start3D(o){
  let S={players:o.players||{}};const th=TH[mapId%10],R=mode>5?55:32;
  const scene=new THREE.Scene();scene.background=new THREE.Color(th[1]);scene.fog=new THREE.Fog(th[1],20,R*2.2);
  const cam=new THREE.PerspectiveCamera(70,innerWidth/innerHeight,.1,300);cam.rotation.order="YXZ";
- const ren=new THREE.WebGLRenderer({antialias:true});ren.setPixelRatio(Math.min(devicePixelRatio,2));ren.setSize(innerWidth,innerHeight);
- const cv=ren.domElement;cv.style.cssText="position:absolute;inset:0;z-index:1;touch-action:none";root.prepend(cv);
+ const ren=new THREE.WebGLRenderer({antialias:true});ren.setPixelRatio(Math.min(devicePixelRatio,2));ren.setSize(innerWidth,innerHeight,false);
+ const cv=ren.domElement;cv.style.cssText="position:absolute;left:0;top:0;width:100%;height:100%;display:block;z-index:1;touch-action:none";root.style.touchAction="none";root.prepend(cv);
  const ar=root.querySelector("#arena");if(ar)ar.style.display="none";
  scene.add(new THREE.HemisphereLight(0xffffff,0x333344,1.1));const sun=new THREE.DirectionalLight(0xffffff,1.2);sun.position.set(30,60,20);scene.add(sun);
  const fl=new THREE.Mesh(new THREE.CircleGeometry(R*1.1,48),M(th[0]));fl.rotation.x=-Math.PI/2;scene.add(fl);
@@ -344,15 +344,15 @@ function start3D(o){
   if(th[2]=="box")geo=new THREE.BoxGeometry(s*1.4,h*1.4,s*1.4);else if(th[2]=="cyl")geo=new THREE.CylinderGeometry(s*.6,s*.6,h*1.6,12);else if(th[2]=="sph"){geo=new THREE.SphereGeometry(s*.9,14,10)}else geo=new THREE.ConeGeometry(s*.9,h*2,10);
   const m=new THREE.Mesh(geo,M(th[3]));geo.computeBoundingBox();const hh=geo.boundingBox.max.y;m.position.set(x,hh,z);m.rotation.y=rr()*3;scene.add(m);obm.push(m);obs.push({x,z,r:s*.9})}
  const P={};let order=[];
- const spawn=k=>{const n=Math.max(order.length,1),i=order.indexOf(k),a=6.283*i/n;return{x:Math.sin(a)*R*.82,z:Math.cos(a)*R*.82,a}};
+ const spawn=k=>{const n=Math.max(order.length,1),i=order.indexOf(k),a=6.283*i/n;return{x:Math.sin(a)*R*.66,z:Math.cos(a)*R*.66,a}};
  const sync=()=>{order=Object.keys(S.players).sort();
-  order.forEach(k=>{const p=S.players[k];if(!P[k]){const g=makeChar(p.eq),sp=spawn(k),lb=label(p.nick,p.hp,k==me),hb=new THREE.Mesh(new THREE.CylinderGeometry(.6,.6,2.2),new THREE.MeshBasicMaterial({visible:false}));
+  order.forEach(k=>{const p=S.players[k];if(!P[k]){const g=makeChar(p.eq),sp=spawn(k),lb=label(p.nick,p.hp,k==me),hb=new THREE.Mesh(new THREE.CylinderGeometry(1,1,2.6),new THREE.MeshBasicMaterial({visible:false}));
     hb.position.y=1.1;hb.userData.id=k;g.add(hb);g.add(lb);g.position.set(sp.x,0,sp.z);if(k==me)g.visible=false;scene.add(g);P[k]={g,lb,hb,base:sp,ph:Math.random()*6,hp:p.hp}}
    const q=P[k];if(q.hp!==p.hp){q.lb.draw(p.hp);if(k==me&&p.hp<q.hp){flash.style.opacity=.5;setTimeout(()=>flash.style.opacity=0,150)}q.hp=p.hp}
    const dead=!p.alive||p.hp<=0;q.dead=dead;q.hb.visible=!dead;q.g.rotation.z=dead?1.5:0;q.g.position.y=dead?.3:0});
   Object.keys(P).forEach(k=>{if(!S.players[k]){scene.remove(P[k].g);delete P[k]}})};
  const ui=document.createElement("div");ui.style.cssText="position:absolute;inset:0;z-index:2;pointer-events:none";
- ui.innerHTML=`<div style="position:absolute;left:50%;top:50%;width:34px;height:34px;transform:translate(-50%,-50%);border:2px solid #fff;border-radius:50%;box-shadow:0 0 6px #000"><i style="position:absolute;left:50%;top:50%;width:4px;height:4px;margin:-2px;background:#f33;border-radius:50%"></i></div><div id="fl3" style="position:absolute;inset:0;background:radial-gradient(transparent 40%,#f00);opacity:0;transition:opacity .2s"></div>`;
+ ui.innerHTML=`<div id="cr3" style="position:absolute;left:50%;top:50%;width:34px;height:34px;transform:translate(-50%,-50%);border:2px solid #fff;border-radius:50%;box-shadow:0 0 6px #000"><i style="position:absolute;left:50%;top:50%;width:4px;height:4px;margin:-2px;background:#f33;border-radius:50%"></i></div><div id="fl3" style="position:absolute;inset:0;background:radial-gradient(transparent 40%,#f00);opacity:0;transition:opacity .2s"></div>`;
  root.appendChild(ui);const flash=ui.querySelector("#fl3");
  const joy=document.createElement("div");joy.style.cssText="position:absolute;width:110px;height:110px;border-radius:50%;background:rgba(255,255,255,.12);border:2px solid rgba(255,255,255,.3);z-index:3;touch-action:none";
  joy.className="joy3";const knob=document.createElement("div");knob.style.cssText="position:absolute;left:35px;top:35px;width:40px;height:40px;border-radius:50%;background:rgba(255,176,46,.8)";joy.appendChild(knob);root.appendChild(joy);
@@ -363,14 +363,14 @@ function start3D(o){
  const sp0=spawn(me);let yaw=0,pitch=0,pos=new THREE.Vector3(0,1.6,0),lp=null;
  const place=()=>{const s=spawn(me);pos.set(s.x,1.6,s.z);yaw=s.a};
  cv.onpointerdown=e=>{lp=e.pointerId;cv.setPointerCapture(lp);cv._x=e.clientX;cv._y=e.clientY};
- cv.onpointermove=e=>{if(e.pointerId!==lp)return;yaw-=(e.clientX-cv._x)*.006;pitch=Math.max(-1.2,Math.min(1.2,pitch-(e.clientY-cv._y)*.006));cv._x=e.clientX;cv._y=e.clientY};
+ cv.onpointermove=e=>{if(e.pointerId!==lp)return;yaw-=(e.clientX-cv._x)*.0042;pitch=Math.max(-1.1,Math.min(1.1,pitch-(e.clientY-cv._y)*.0042));cv._x=e.clientX;cv._y=e.clientY};
  cv.onpointerup=cv.onpointercancel=()=>lp=null;
  const ray=new THREE.Raycaster(),shots=[];
  const proj=(to,col,s=1)=>{const m=poop(S.players[me]?.eq?.p||0,s);m.position.copy(pos).add(new THREE.Vector3(.3,-.3,0).applyEuler(cam.rotation));scene.add(m);shots.push({m,to,t:0,from:m.position.clone()})};
  const aim=()=>{ray.setFromCamera({x:0,y:0},cam);const t=Object.entries(P).filter(([k,q])=>k!=me&&!q.dead&&(!o.teams||(S.players[k].team||'A')!==((S.players[me]||{}).team||'A'))).map(([k,q])=>q.hb);const h=ray.intersectObjects([...t,...obm],false)[0];return h};
- const aimA=()=>{const h=aim();if(h&&h.object.userData.id)return h;const dir=cam.getWorldDirection(new THREE.Vector3()),my=S.players[me]||{};let best=null,ba=.3;
+ const aimA=()=>{const h=aim();if(h&&h.object.userData.id)return h;const dir=cam.getWorldDirection(new THREE.Vector3()),my=S.players[me]||{};let best=null,ba=.55;
   Object.entries(P).forEach(([k,q])=>{if(k==me||q.dead)return;if(o.teams&&(S.players[k].team||'A')===(my.team||'A'))return;const tp=q.g.position.clone().setY(1.2),v=tp.clone().sub(pos),d=v.length();v.normalize();const a=dir.angleTo(v);
-   if(a<ba&&d<R*1.6){ray.set(pos,v);const bl=ray.intersectObjects(obm,false)[0];if(!bl||bl.distance>d){ba=a;best={point:tp,object:q.hb,distance:d}}}});return best||h};
+   if(a<ba&&d<R*1.6){ray.set(pos,v);const bl=ray.intersectObjects(obm,false)[0];if(!bl||bl.distance>d-2){ba=a;best={point:tp,object:q.hb,distance:d}}}});return best||h};
  let af=null;
  const fire=()=>{const p=S.players[me];if(!p||!p.alive||p.hp<=0)return;const h=aimA();
   const to=h?h.point.clone():cam.getWorldDirection(new THREE.Vector3()).multiplyScalar(60).add(pos);proj(to);
@@ -385,7 +385,8 @@ function start3D(o){
  root.querySelectorAll("[data-r]").forEach(b=>b.onclick=e=>{e.stopPropagation();const r=b.dataset.r;const d=document.createElement("div");d.textContent=E[r];d.style.cssText="position:absolute;left:50%;top:40%;font-size:60px;z-index:5;transition:all 1.2s;pointer-events:none";root.appendChild(d);requestAnimationFrame(()=>{d.style.top="15%";d.style.opacity=0});setTimeout(()=>d.remove(),1300);onReact&&onReact(r)});
  const seen={};
  let raf,last=performance.now();
- const loop=t=>{raf=requestAnimationFrame(loop);const dt=Math.min(.05,(t-last)/1000);last=t;const ts=t/1000;
+ let fc=0;const crEl=ui.querySelector("#cr3");
+ const loop=t=>{if(fc++%4==0&&crEl){const h=aimA();crEl.style.borderColor=h&&h.object.userData.id?"#f33":"#fff"}raf=requestAnimationFrame(loop);const dt=Math.min(.05,(t-last)/1000);last=t;const ts=t/1000;
   rainbow.forEach(m=>m.color.setHSL((ts*.3)%1,.9,.5));
   const sp=4.5*dt;pos.x+=(-Math.sin(yaw)*-mv.y+Math.cos(yaw)*mv.x)*sp;pos.z+=(-Math.cos(yaw)*-mv.y-Math.sin(yaw)*mv.x)*sp;
   const d=Math.hypot(pos.x,pos.z);if(d>R-1.5){pos.x*=(R-1.5)/d;pos.z*=(R-1.5)/d}
@@ -395,7 +396,7 @@ function start3D(o){
   for(let i=shots.length-1;i>=0;i--){const s=shots[i];s.t+=dt*3;s.m.position.lerpVectors(s.from,s.to,Math.min(1,s.t));s.m.rotation.x+=.3;if(s.t>=1){scene.remove(s.m);shots.splice(i,1)}}
   ren.render(scene,cam)};
  sync();place();raf=requestAnimationFrame(loop);
- const rs=()=>{cam.aspect=innerWidth/innerHeight;cam.updateProjectionMatrix();ren.setSize(innerWidth,innerHeight)};addEventListener("resize",rs);
+ const rs=()=>{cam.aspect=innerWidth/innerHeight;cam.updateProjectionMatrix();ren.setSize(innerWidth,innerHeight,false)};addEventListener("resize",rs);
  return{update(pl){S.players=pl;sync()},
   reactAll(re){Object.entries(re||{}).forEach(([k,v])=>{if(k!==me&&v.t>(seen[k]||0)){seen[k]=v.t;if(Date.now()-v.t<4000)showR(k,v.r)}})},
   destroy(){clearInterval(af);cancelAnimationFrame(raf);removeEventListener("resize",rs);ren.dispose();cv.remove();ui.remove();joy.remove()}}
@@ -871,7 +872,7 @@ function openBattle(){
   root.appendChild(deco);
   document.body.appendChild(root);
   $("#app").classList.remove("on");
-  setTimeout(()=>{setupBattle();g3&&g3.destroy();g3=start3D({root,me:nk,mapId:roomData.map,mode:roomData.mode,dmg:poopDmg(U),teams:roomData.teamMode,players:roomData.players,onHit:(id,d,sup)=>doDamage(id,d,sup,nk),onSuper:()=>update(ref(db,`rooms/${roomCode}/players/${nk}`),{superCharge:0}),onFail:()=>toast("Не заряжено"),onReact:r=>set(ref(db,`rooms/${roomCode}/react/${nk}`),{r,t:Date.now()})})},60);
+  setTimeout(()=>{try{setupBattle();g3&&g3.destroy();g3=start3D({root,me:nk,mapId:roomData.map,mode:roomData.mode,dmg:poopDmg(U),teams:roomData.teamMode,players:roomData.players,onHit:(id,d,sup)=>doDamage(id,d,sup,nk),onSuper:()=>update(ref(db,`rooms/${roomCode}/players/${nk}`),{superCharge:0}),onFail:()=>toast("Не заряжено"),onReact:r=>set(ref(db,`rooms/${roomCode}/react/${nk}`),{r,t:Date.now()})})}catch(e){console.error(e);toast("3D: "+e.message)}},60);
 }
 
 function cleanupBattle(){
