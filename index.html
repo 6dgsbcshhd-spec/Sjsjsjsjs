@@ -115,6 +115,8 @@ button.menu-btn{padding:11px 12px;font-size:13px;border-radius:14px;width:100%}
 .v-buttons{display:flex;gap:10px;margin-top:20px;width:100%}
 .v-buttons button{flex:1;padding:14px}
 .v-rematch-info{color:var(--mut);font-size:12px;margin-top:8px;min-height:16px}
+.joy3{left:18px;bottom:150px}
+@media (orientation:landscape){.joy3{left:28px!important;bottom:24px!important}#battle-controls{position:absolute;right:16px;bottom:14px;padding:0;gap:14px;justify-content:flex-end}#reactions{position:absolute;right:14px;top:70px;flex-direction:column;padding:0;gap:6px}#btn-shoot{width:90px;height:90px}#btn-super{width:84px;height:84px}.rbtn{width:40px;height:40px}}
 @media (max-width:640px){
   .menu-grid{grid-template-columns:1fr;gap:10px}
   .menu-center{order:-1}
@@ -352,8 +354,8 @@ function start3D(o){
  const ui=document.createElement("div");ui.style.cssText="position:absolute;inset:0;z-index:2;pointer-events:none";
  ui.innerHTML=`<div style="position:absolute;left:50%;top:50%;width:34px;height:34px;transform:translate(-50%,-50%);border:2px solid #fff;border-radius:50%;box-shadow:0 0 6px #000"><i style="position:absolute;left:50%;top:50%;width:4px;height:4px;margin:-2px;background:#f33;border-radius:50%"></i></div><div id="fl3" style="position:absolute;inset:0;background:radial-gradient(transparent 40%,#f00);opacity:0;transition:opacity .2s"></div>`;
  root.appendChild(ui);const flash=ui.querySelector("#fl3");
- const joy=document.createElement("div");joy.style.cssText="position:absolute;left:18px;bottom:150px;width:110px;height:110px;border-radius:50%;background:rgba(255,255,255,.12);border:2px solid rgba(255,255,255,.3);z-index:3;touch-action:none";
- const knob=document.createElement("div");knob.style.cssText="position:absolute;left:35px;top:35px;width:40px;height:40px;border-radius:50%;background:rgba(255,176,46,.8)";joy.appendChild(knob);root.appendChild(joy);
+ const joy=document.createElement("div");joy.style.cssText="position:absolute;width:110px;height:110px;border-radius:50%;background:rgba(255,255,255,.12);border:2px solid rgba(255,255,255,.3);z-index:3;touch-action:none";
+ joy.className="joy3";const knob=document.createElement("div");knob.style.cssText="position:absolute;left:35px;top:35px;width:40px;height:40px;border-radius:50%;background:rgba(255,176,46,.8)";joy.appendChild(knob);root.appendChild(joy);
  const mv={x:0,y:0};let jp=null;
  joy.onpointerdown=e=>{jp=e.pointerId;joy.setPointerCapture(jp);jm(e)};
  const jm=e=>{if(e.pointerId!==jp)return;const r=joy.getBoundingClientRect();let dx=(e.clientX-r.left-55)/45,dy=(e.clientY-r.top-55)/45;const l=Math.hypot(dx,dy);if(l>1){dx/=l;dy/=l}mv.x=dx;mv.y=dy;knob.style.left=35+dx*35+"px";knob.style.top=35+dy*35+"px"};
@@ -366,7 +368,11 @@ function start3D(o){
  const ray=new THREE.Raycaster(),shots=[];
  const proj=(to,col,s=1)=>{const m=poop(S.players[me]?.eq?.p||0,s);m.position.copy(pos).add(new THREE.Vector3(.3,-.3,0).applyEuler(cam.rotation));scene.add(m);shots.push({m,to,t:0,from:m.position.clone()})};
  const aim=()=>{ray.setFromCamera({x:0,y:0},cam);const t=Object.entries(P).filter(([k,q])=>k!=me&&!q.dead&&(!o.teams||(S.players[k].team||'A')!==((S.players[me]||{}).team||'A'))).map(([k,q])=>q.hb);const h=ray.intersectObjects([...t,...obm],false)[0];return h};
- const fire=()=>{const p=S.players[me];if(!p||!p.alive||p.hp<=0)return;const h=aim();
+ const aimA=()=>{const h=aim();if(h&&h.object.userData.id)return h;const dir=cam.getWorldDirection(new THREE.Vector3()),my=S.players[me]||{};let best=null,ba=.3;
+  Object.entries(P).forEach(([k,q])=>{if(k==me||q.dead)return;if(o.teams&&(S.players[k].team||'A')===(my.team||'A'))return;const tp=q.g.position.clone().setY(1.2),v=tp.clone().sub(pos),d=v.length();v.normalize();const a=dir.angleTo(v);
+   if(a<ba&&d<R*1.6){ray.set(pos,v);const bl=ray.intersectObjects(obm,false)[0];if(!bl||bl.distance>d){ba=a;best={point:tp,object:q.hb,distance:d}}}});return best||h};
+ let af=null;
+ const fire=()=>{const p=S.players[me];if(!p||!p.alive||p.hp<=0)return;const h=aimA();
   const to=h?h.point.clone():cam.getWorldDirection(new THREE.Vector3()).multiplyScalar(60).add(pos);proj(to);
   if(h&&h.object.userData.id)onHit(h.object.userData.id,dmg,false)};
  const sup=()=>{const p=S.players[me];if(!p||(p.superCharge||0)<100){return o.onFail&&o.onFail()}
@@ -375,7 +381,7 @@ function start3D(o){
  const showR=(k,r)=>{const q=P[k];if(!q||k==me)return;const c=document.createElement("canvas");c.width=c.height=128;const x=c.getContext("2d");x.font="96px serif";x.textAlign="center";x.fillText(E[r],64,100);
   const s=new THREE.Sprite(new THREE.SpriteMaterial({map:new THREE.CanvasTexture(c),depthTest:false}));s.scale.set(1,1,1);s.position.y=3;q.g.add(s);let t=0;const f=()=>{t+=.02;s.position.y=3+t*2;s.material.opacity=1-t;if(t<1)requestAnimationFrame(f);else q.g.remove(s)};f()};
  const q=s=>root.querySelector(s);
- q("#btn-shoot").onclick=fire;q("#btn-super").onclick=sup;
+ {const sb=q("#btn-shoot");sb.onclick=null;sb.onpointerdown=e=>{e.preventDefault();fire();clearInterval(af);af=setInterval(fire,280)};sb.onpointerup=sb.onpointerleave=sb.onpointercancel=()=>clearInterval(af)}q("#btn-super").onclick=sup;
  root.querySelectorAll("[data-r]").forEach(b=>b.onclick=e=>{e.stopPropagation();const r=b.dataset.r;const d=document.createElement("div");d.textContent=E[r];d.style.cssText="position:absolute;left:50%;top:40%;font-size:60px;z-index:5;transition:all 1.2s;pointer-events:none";root.appendChild(d);requestAnimationFrame(()=>{d.style.top="15%";d.style.opacity=0});setTimeout(()=>d.remove(),1300);onReact&&onReact(r)});
  const seen={};
  let raf,last=performance.now();
@@ -392,7 +398,7 @@ function start3D(o){
  const rs=()=>{cam.aspect=innerWidth/innerHeight;cam.updateProjectionMatrix();ren.setSize(innerWidth,innerHeight)};addEventListener("resize",rs);
  return{update(pl){S.players=pl;sync()},
   reactAll(re){Object.entries(re||{}).forEach(([k,v])=>{if(k!==me&&v.t>(seen[k]||0)){seen[k]=v.t;if(Date.now()-v.t<4000)showR(k,v.r)}})},
-  destroy(){cancelAnimationFrame(raf);removeEventListener("resize",rs);ren.dispose();cv.remove();ui.remove();joy.remove()}}
+  destroy(){clearInterval(af);cancelAnimationFrame(raf);removeEventListener("resize",rs);ren.dispose();cv.remove();ui.remove();joy.remove()}}
 }
 
 return start3D})();
@@ -1252,3 +1258,4 @@ async function intro(){
 })();
 </script>
 </body>
+</html>
